@@ -5,28 +5,27 @@ import type {
     Canvas,
     CanvasOptions,
     CircleRoadInput,
-    CircleRoadShape,
+    CircleRoadFigure,
     LineRoadInput,
-    LineRoadShape,
+    LineRoadFigure,
     RayRoadInput,
-    ResolvedRoadStyle,
-    RoadShape,
-    ShapeId,
-    SpiralRoadShape,
+    RoadStyle,
+    Figure,
+    SpiralRoadFigure,
 } from '../domain/types.js';
 import { DEFAULT_JUNCTION_FLAGS, DEFAULT_MAX_SEGMENT_LENGTH } from '../utils/constants.js';
 import { polarPoint } from '../utils/geometry.js';
 
-const createShapeIdFactory = (): (() => ShapeId) => {
+const createFigIdFactory = (): (() => number) => {
     let nextId = 1;
 
-    return () => `shape-${nextId++}`;
+    return () => nextId++;
 };
 
 const resolveRoadStyle = (
     defaults: CanvasOptions['defaultRoad'] | undefined,
     overrides: CircleRoadInput['road'] | undefined
-): ResolvedRoadStyle => {
+): RoadStyle => {
     const prefabName = overrides?.prefabName ?? defaults?.prefabName ?? 'Gravel Road';
     const flags = overrides?.flags ?? defaults?.flags ?? 'Created End Moveable OnGround OneWayOut OneWayIn';
     const junctionFlags = overrides?.junctionFlags ?? defaults?.junctionFlags ?? DEFAULT_JUNCTION_FLAGS;
@@ -39,40 +38,40 @@ const resolveRoadStyle = (
 };
 
 const createCanvas = (options: CanvasOptions = {}): Canvas => {
-    const shapes: RoadShape[] = [];
-    const nextShapeId = createShapeIdFactory();
+    const figures: Figure[] = [];
+    const nextFigId = createFigIdFactory();
     const canvasDefaults = {
         maxSegmentLength: options.maxSegmentLength ?? DEFAULT_MAX_SEGMENT_LENGTH,
         defaultRoad: resolveRoadStyle(options.defaultRoad, undefined),
     };
 
-    const addShape = <TShape extends RoadShape>(
-        shape: Omit<TShape, 'id' | 'road'>,
+    const addFigure = <TFig extends Figure>(
+        figure: Omit<TFig, 'id' | 'road'>,
         road: CircleRoadInput['road']
-    ): ShapeId => {
-        const id = nextShapeId();
-        const resolvedShape = {
-            ...shape,
+    ): number => {
+        const id = nextFigId();
+        const resolvedFig = {
+            ...figure,
             id,
             road: resolveRoadStyle(canvasDefaults.defaultRoad, road),
-        } as TShape;
+        } as TFig;
 
-        shapes.push(resolvedShape);
+        figures.push(resolvedFig);
 
         return id;
     };
 
-    const withOptionalMaxSegmentLength = <TShape extends { readonly maxSegmentLength?: number }>(
-        shape: TShape,
+    const withOptionalMaxSegmentLength = <TFig extends { readonly maxSegmentLength?: number }>(
+        figure: TFig,
         maxSegmentLength: number | undefined
-    ): TShape => {
-        return maxSegmentLength === undefined ? shape : { ...shape, maxSegmentLength };
+    ): TFig => {
+        return maxSegmentLength === undefined ? figure : { ...figure, maxSegmentLength };
     };
 
     return {
-        addLineRoad(input: LineRoadInput): ShapeId {
-            return addShape(
-                withOptionalMaxSegmentLength<Omit<LineRoadShape, 'id' | 'road'>>(
+        addLineRoad(input: LineRoadInput): number {
+            return addFigure(
+                withOptionalMaxSegmentLength<Omit<LineRoadFigure, 'id' | 'road'>>(
                     {
                         kind: 'line',
                         start: input.start,
@@ -83,9 +82,9 @@ const createCanvas = (options: CanvasOptions = {}): Canvas => {
                 input.road
             );
         },
-        addRayRoad(input: RayRoadInput): ShapeId {
-            return addShape(
-                withOptionalMaxSegmentLength<Omit<LineRoadShape, 'id' | 'road'>>(
+        addRayRoad(input: RayRoadInput): number {
+            return addFigure(
+                withOptionalMaxSegmentLength<Omit<LineRoadFigure, 'id' | 'road'>>(
                     {
                         kind: 'line',
                         start: input.start,
@@ -96,9 +95,9 @@ const createCanvas = (options: CanvasOptions = {}): Canvas => {
                 input.road
             );
         },
-        addCircleRoad(input: CircleRoadInput): ShapeId {
-            return addShape(
-                withOptionalMaxSegmentLength<Omit<CircleRoadShape, 'id' | 'road'>>(
+        addCircleRoad(input: CircleRoadInput): number {
+            return addFigure(
+                withOptionalMaxSegmentLength<Omit<CircleRoadFigure, 'id' | 'road'>>(
                     {
                         kind: 'circle',
                         center: input.center,
@@ -109,9 +108,9 @@ const createCanvas = (options: CanvasOptions = {}): Canvas => {
                 input.road
             );
         },
-        addArchimedeanSpiralRoad(input: ArchimedeanSpiralRoadInput): ShapeId {
-            return addShape(
-                withOptionalMaxSegmentLength<Omit<SpiralRoadShape, 'id' | 'road'>>(
+        addArchimedeanSpiralRoad(input: ArchimedeanSpiralRoadInput): number {
+            return addFigure(
+                withOptionalMaxSegmentLength<Omit<SpiralRoadFigure, 'id' | 'road'>>(
                     {
                         kind: 'spiral',
                         center: input.center,
@@ -126,13 +125,13 @@ const createCanvas = (options: CanvasOptions = {}): Canvas => {
                 input.road
             );
         },
-        listShapes(): readonly RoadShape[] {
-            return shapes;
+        get figures(): readonly Figure[] {
+            return figures;
         },
         build(): BuildResult {
             return buildNetwork({
                 maxSegmentLength: canvasDefaults.maxSegmentLength,
-                shapes,
+                figures,
             });
         },
     };

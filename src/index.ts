@@ -13,7 +13,7 @@ export type {
     Point2,
     Point3,
     RayRoadInput,
-    RoadShape,
+    Figure,
     RoadStyleInput,
 } from './domain/types.js';
 export { polarPoint } from './utils/geometry.js';

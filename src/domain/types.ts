@@ -13,7 +13,7 @@ export interface RoadStyleInput {
     readonly junctionFlags?: string;
 }
 
-export interface ResolvedRoadStyle {
+export interface RoadStyle {
     readonly prefabName: string;
     readonly flags: string;
     readonly junctionFlags: string;
@@ -24,29 +24,29 @@ export interface CanvasOptions {
     readonly defaultRoad?: RoadStyleInput;
 }
 
-export interface ShapeBaseInput {
+interface RoadFigureInputBase {
     readonly road?: RoadStyleInput;
     readonly maxSegmentLength?: number;
 }
 
-export interface LineRoadInput extends ShapeBaseInput {
+export interface LineRoadInput extends RoadFigureInputBase {
     readonly start: Point3;
     readonly end: Point3;
 }
 
-export interface RayRoadInput extends ShapeBaseInput {
+export interface RayRoadInput extends RoadFigureInputBase {
     readonly start: Point3;
     readonly angleDeg: number;
     readonly length: number;
     readonly endY?: number;
 }
 
-export interface CircleRoadInput extends ShapeBaseInput {
+export interface CircleRoadInput extends RoadFigureInputBase {
     readonly center: Point3;
     readonly radius: number;
 }
 
-export interface ArchimedeanSpiralRoadInput extends ShapeBaseInput {
+export interface ArchimedeanSpiralRoadInput extends RoadFigureInputBase {
     readonly center: Point3;
     readonly startRadius: number;
     readonly pitch: number;
@@ -57,44 +57,41 @@ export interface ArchimedeanSpiralRoadInput extends ShapeBaseInput {
 
 export type RotationDirection = 'clockwise' | 'counterclockwise';
 
-export type ShapeId = `shape-${number}`;
+interface FigureBase<Kind extends string> {
+    readonly id: number;
+    readonly kind: Kind;
+}
 
-export interface LineRoadShape {
-    readonly id: ShapeId;
-    readonly kind: 'line';
+export interface LineRoadFigure extends FigureBase<'line'> {
     readonly start: Point3;
     readonly end: Point3;
-    readonly road: ResolvedRoadStyle;
+    readonly road: RoadStyle;
     readonly maxSegmentLength?: number;
 }
 
-export interface CircleRoadShape {
-    readonly id: ShapeId;
-    readonly kind: 'circle';
+export interface CircleRoadFigure extends FigureBase<'circle'> {
     readonly center: Point3;
     readonly radius: number;
-    readonly road: ResolvedRoadStyle;
+    readonly road: RoadStyle;
     readonly maxSegmentLength?: number;
 }
 
-export interface SpiralRoadShape {
-    readonly id: ShapeId;
-    readonly kind: 'spiral';
+export interface SpiralRoadFigure extends FigureBase<'spiral'> {
     readonly center: Point3;
     readonly startRadius: number;
     readonly pitch: number;
     readonly direction: RotationDirection;
     readonly startAngleDeg: number;
     readonly arcLength: number;
-    readonly road: ResolvedRoadStyle;
+    readonly road: RoadStyle;
     readonly maxSegmentLength?: number;
 }
 
-export type RoadShape = LineRoadShape | CircleRoadShape | SpiralRoadShape;
+export type Figure = LineRoadFigure | CircleRoadFigure | SpiralRoadFigure;
 
 export interface BuildSettings {
     readonly maxSegmentLength: number;
-    readonly shapes: readonly RoadShape[];
+    readonly figures: readonly Figure[];
 }
 
 export interface NetworkNode {
@@ -114,21 +111,21 @@ export interface NetworkSegment {
     readonly midpoint: Point3;
     readonly startDirection: Point2;
     readonly endDirection: Point2;
-    readonly sourceShapeId: ShapeId;
+    readonly sourceFigId: number;
 }
 
 export interface BuildResult {
     readonly center: Point3 | undefined;
     readonly nodes: readonly NetworkNode[];
     readonly segments: readonly NetworkSegment[];
-    readonly shapes: readonly RoadShape[];
+    readonly figs: readonly Figure[];
 }
 
 export interface Canvas {
-    addLineRoad(input: LineRoadInput): ShapeId;
-    addRayRoad(input: RayRoadInput): ShapeId;
-    addCircleRoad(input: CircleRoadInput): ShapeId;
-    addArchimedeanSpiralRoad(input: ArchimedeanSpiralRoadInput): ShapeId;
-    listShapes(): readonly RoadShape[];
+    addLineRoad(input: LineRoadInput): number;
+    addRayRoad(input: RayRoadInput): number;
+    addCircleRoad(input: CircleRoadInput): number;
+    addArchimedeanSpiralRoad(input: ArchimedeanSpiralRoadInput): number;
+    get figures(): readonly Figure[];
     build(): BuildResult;
 }

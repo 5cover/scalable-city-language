@@ -81,6 +81,12 @@ const xml = compileToMoveIt(network);
 - `x` is east/west, `z` is north/south, and optional `y` is elevation.
 - If `y` is omitted, SCL omits `<y>` in XML so Move It can snap that position to terrain height.
 
+## Vocabulary
+
+- Input : API parameters to create a figure.
+- Figure : high level shape representation
+- Shape : parametric shape IR
+
 ## Running Checks
 
 ```sh

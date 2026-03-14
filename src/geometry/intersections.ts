@@ -1,4 +1,4 @@
-import type { RoadShape, ShapeId } from '../domain/types.js';
+import type { Figure } from '../domain/types.js';
 import { invariant } from '../utils/assert.js';
 import {
     INTERSECTION_SAMPLE_SPACING,
@@ -9,11 +9,11 @@ import {
     POSITION_EPSILON,
 } from '../utils/constants.js';
 import { clamp, cross2, distance2, dot2, nearlyEqual, point2, subtract2 } from '../utils/math.js';
-import type { CurveAdapter } from './curves.js';
+import type { Shape } from './shapes.js';
 
-interface CurveIntersection {
-    readonly leftShapeId: ShapeId;
-    readonly rightShapeId: ShapeId;
+interface ShapeIntersection {
+    readonly leftFigId: number;
+    readonly rightFigId: number;
     readonly leftT: number;
     readonly rightT: number;
 }
@@ -24,11 +24,11 @@ const normalizeClosedParameter = (value: number): number => {
 };
 
 const dedupeIntersections = (
-    intersections: readonly CurveIntersection[],
+    intersections: readonly ShapeIntersection[],
     leftClosed: boolean,
     rightClosed: boolean
-): CurveIntersection[] => {
-    const deduped: CurveIntersection[] = [];
+): ShapeIntersection[] => {
+    const deduped: ShapeIntersection[] = [];
 
     for (const intersection of intersections) {
         const candidate = {
@@ -51,27 +51,22 @@ const dedupeIntersections = (
     return deduped;
 };
 
-const createIntersection = (
-    left: CurveAdapter,
-    right: CurveAdapter,
-    leftT: number,
-    rightT: number
-): CurveIntersection => {
+const createIntersection = (left: Shape, right: Shape, leftT: number, rightT: number): ShapeIntersection => {
     return {
-        leftShapeId: left.shape.id,
-        rightShapeId: right.shape.id,
+        leftFigId: left.figure.id,
+        rightFigId: right.figure.id,
         leftT,
         rightT,
     };
 };
 
-const intersectLineLine = (left: CurveAdapter, right: CurveAdapter): CurveIntersection[] => {
-    const leftShape = left.shape as Extract<RoadShape, { kind: 'line' }>;
-    const rightShape = right.shape as Extract<RoadShape, { kind: 'line' }>;
-    const p = point2(leftShape.start.x, leftShape.start.z);
-    const q = point2(rightShape.start.x, rightShape.start.z);
-    const r = point2(leftShape.end.x - leftShape.start.x, leftShape.end.z - leftShape.start.z);
-    const s = point2(rightShape.end.x - rightShape.start.x, rightShape.end.z - rightShape.start.z);
+const intersectLineLine = (left: Shape, right: Shape): ShapeIntersection[] => {
+    const leftFig = left.figure as Extract<Figure, { kind: 'line' }>;
+    const rightFig = right.figure as Extract<Figure, { kind: 'line' }>;
+    const p = point2(leftFig.start.x, leftFig.start.z);
+    const q = point2(rightFig.start.x, rightFig.start.z);
+    const r = point2(leftFig.end.x - leftFig.start.x, leftFig.end.z - leftFig.start.z);
+    const s = point2(rightFig.end.x - rightFig.start.x, rightFig.end.z - rightFig.start.z);
     const rxs = cross2(r, s);
     const qMinusP = subtract2(q, p);
     const qpxr = cross2(qMinusP, r);
@@ -85,7 +80,7 @@ const intersectLineLine = (left: CurveAdapter, right: CurveAdapter): CurveInters
 
         invariant(
             overlapEnd - overlapStart <= POSITION_EPSILON,
-            `Overlapping collinear line roads are not supported (${left.shape.id}, ${right.shape.id}).`
+            `Overlapping collinear line roads are not supported (${left.figure.id}, ${right.figure.id}).`
         );
 
         return [];
@@ -105,10 +100,10 @@ const intersectLineLine = (left: CurveAdapter, right: CurveAdapter): CurveInters
     return [createIntersection(left, right, clamp(t, 0, 1), clamp(u, 0, 1))];
 };
 
-const intersectLineCircle = (left: CurveAdapter, right: CurveAdapter): CurveIntersection[] => {
-    const line = left.shape.kind === 'line' ? left.shape : (right.shape as Extract<RoadShape, { kind: 'line' }>);
-    const circle = left.shape.kind === 'circle' ? left.shape : (right.shape as Extract<RoadShape, { kind: 'circle' }>);
-    const lineIsLeft = left.shape.kind === 'line';
+const intersectLineCircle = (left: Shape, right: Shape): ShapeIntersection[] => {
+    const line = left.figure.kind === 'line' ? left.figure : (right.figure as Extract<Figure, { kind: 'line' }>);
+    const circle = left.figure.kind === 'circle' ? left.figure : (right.figure as Extract<Figure, { kind: 'circle' }>);
+    const lineIsLeft = left.figure.kind === 'line';
     const start = point2(line.start.x, line.start.z);
     const end = point2(line.end.x, line.end.z);
     const center = point2(circle.center.x, circle.center.z);
@@ -149,9 +144,9 @@ const intersectLineCircle = (left: CurveAdapter, right: CurveAdapter): CurveInte
     );
 };
 
-const intersectCircleCircle = (left: CurveAdapter, right: CurveAdapter): CurveIntersection[] => {
-    const a = left.shape as Extract<RoadShape, { kind: 'circle' }>;
-    const b = right.shape as Extract<RoadShape, { kind: 'circle' }>;
+const intersectCircleCircle = (left: Shape, right: Shape): ShapeIntersection[] => {
+    const a = left.figure as Extract<Figure, { kind: 'circle' }>;
+    const b = right.figure as Extract<Figure, { kind: 'circle' }>;
     const centerA = point2(a.center.x, a.center.z);
     const centerB = point2(b.center.x, b.center.z);
     const distance = distance2(centerA, centerB);
@@ -202,9 +197,9 @@ const intersectCircleCircle = (left: CurveAdapter, right: CurveAdapter): CurveIn
     );
 };
 
-const sampleCountForCurve = (curve: CurveAdapter): number => {
+const shapeSampleCount = (shape: Shape): number => {
     return clamp(
-        Math.ceil(curve.totalLength / INTERSECTION_SAMPLE_SPACING),
+        Math.ceil(shape.totalLength / INTERSECTION_SAMPLE_SPACING),
         MIN_INTERSECTION_SAMPLE_COUNT,
         MAX_INTERSECTION_SAMPLE_COUNT
     );
@@ -257,17 +252,17 @@ const scanRoots = (fn: (value: number) => number, sampleCount: number): number[]
     return roots;
 };
 
-const intersectLineSpiral = (left: CurveAdapter, right: CurveAdapter): CurveIntersection[] => {
-    const line = left.shape.kind === 'line' ? left.shape : (right.shape as Extract<RoadShape, { kind: 'line' }>);
-    const spiral = left.shape.kind === 'spiral' ? left : right;
-    const lineIsLeft = left.shape.kind === 'line';
+const intersectLineSpiral = (left: Shape, right: Shape): ShapeIntersection[] => {
+    const line = left.figure.kind === 'line' ? left.figure : (right.figure as Extract<Figure, { kind: 'line' }>);
+    const spiral = left.figure.kind === 'spiral' ? left : right;
+    const lineIsLeft = left.figure.kind === 'line';
     const start = point2(line.start.x, line.start.z);
     const direction = point2(line.end.x - line.start.x, line.end.z - line.start.z);
     const directionLengthSquared = dot2(direction, direction);
     const roots = scanRoots(t => {
         const point = spiral.pointAt(t);
         return cross2(subtract2(point2(point.x, point.z), start), direction);
-    }, sampleCountForCurve(spiral));
+    }, shapeSampleCount(spiral));
 
     return dedupeIntersections(
         roots
@@ -287,15 +282,15 @@ const intersectLineSpiral = (left: CurveAdapter, right: CurveAdapter): CurveInte
     );
 };
 
-const intersectCircleSpiral = (left: CurveAdapter, right: CurveAdapter): CurveIntersection[] => {
-    const circle = left.shape.kind === 'circle' ? left.shape : (right.shape as Extract<RoadShape, { kind: 'circle' }>);
-    const spiral = left.shape.kind === 'spiral' ? left : right;
-    const circleIsLeft = left.shape.kind === 'circle';
+const intersectCircleSpiral = (left: Shape, right: Shape): ShapeIntersection[] => {
+    const circle = left.figure.kind === 'circle' ? left.figure : (right.figure as Extract<Figure, { kind: 'circle' }>);
+    const spiral = left.figure.kind === 'spiral' ? left : right;
+    const circleIsLeft = left.figure.kind === 'circle';
     const center = point2(circle.center.x, circle.center.z);
     const roots = scanRoots(t => {
         const point = spiral.pointAt(t);
         return distance2(point2(point.x, point.z), center) - circle.radius;
-    }, sampleCountForCurve(spiral));
+    }, shapeSampleCount(spiral));
 
     return dedupeIntersections(
         roots.map(spiralT => {
@@ -313,28 +308,28 @@ const intersectCircleSpiral = (left: CurveAdapter, right: CurveAdapter): CurveIn
     );
 };
 
-const intersectCurves = (left: CurveAdapter, right: CurveAdapter): CurveIntersection[] => {
-    if (left.shape.kind === 'line' && right.shape.kind === 'line') {
+const intersectShapes = (left: Shape, right: Shape): ShapeIntersection[] => {
+    if (left.figure.kind === 'line' && right.figure.kind === 'line') {
         return intersectLineLine(left, right);
     }
     if (
-        (left.shape.kind === 'line' && right.shape.kind === 'circle') ||
-        (left.shape.kind === 'circle' && right.shape.kind === 'line')
+        (left.figure.kind === 'line' && right.figure.kind === 'circle') ||
+        (left.figure.kind === 'circle' && right.figure.kind === 'line')
     ) {
         return intersectLineCircle(left, right);
     }
-    if (left.shape.kind === 'circle' && right.shape.kind === 'circle') {
+    if (left.figure.kind === 'circle' && right.figure.kind === 'circle') {
         return intersectCircleCircle(left, right);
     }
     if (
-        (left.shape.kind === 'line' && right.shape.kind === 'spiral') ||
-        (left.shape.kind === 'spiral' && right.shape.kind === 'line')
+        (left.figure.kind === 'line' && right.figure.kind === 'spiral') ||
+        (left.figure.kind === 'spiral' && right.figure.kind === 'line')
     ) {
         return intersectLineSpiral(left, right);
     }
     if (
-        (left.shape.kind === 'circle' && right.shape.kind === 'spiral') ||
-        (left.shape.kind === 'spiral' && right.shape.kind === 'circle')
+        (left.figure.kind === 'circle' && right.figure.kind === 'spiral') ||
+        (left.figure.kind === 'spiral' && right.figure.kind === 'circle')
     ) {
         return intersectCircleSpiral(left, right);
     }
@@ -342,5 +337,5 @@ const intersectCurves = (left: CurveAdapter, right: CurveAdapter): CurveIntersec
     return [];
 };
 
-export { intersectCurves };
-export type { CurveIntersection };
+export { intersectShapes };
+export type { ShapeIntersection };
