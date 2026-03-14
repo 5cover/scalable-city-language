@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dirt road cross. -->
+<Selection>
+  <center>
+    <x>250.477112</x>
+    <z>126.157455</z>
+  </center>
+  <version>2.10.8</version>
+  <state d2p1:type="NodeState" xmlns:d2p1="http://www.w3.org/2001/XMLSchema-instance">
+    <position>
+      <x>230.8185</x>
+      <z>91.2558441</z>
+    </position>
+    <id>83907504</id>
+    <prefabName>Gravel Road</prefabName>
+    <flags>Created End Moveable OnGround OneWayOut OneWayIn</flags>
+    <segmentsList>11087</segmentsList>
+  </state>
+  <state d2p1:type="NodeState" xmlns:d2p1="http://www.w3.org/2001/XMLSchema-instance">
+    <position>
+      <x>250.3602</x>
+      <z>126.157448</z>
+    </position>
+    <id>83893652</id>
+    <prefabName>Gravel Road</prefabName>
+    <flags>Created Junction OnGround</flags>
+    <segmentsList>33888</segmentsList>
+    <segmentsList>11087</segmentsList>
+    <segmentsList>33576</segmentsList>
+    <segmentsList>36038</segmentsList>
+  </state>
+  <state d2p1:type="NodeState" xmlns:d2p1="http://www.w3.org/2001/XMLSchema-instance">
+    <position>
+      <x>285.2618</x>
+      <z>106.615753</z>
+    </position>
+    <id>83894598</id>
+    <prefabName>Gravel Road</prefabName>
+    <flags>Created End Moveable OnGround OneWayOut OneWayIn</flags>
+    <segmentsList>33888</segmentsList>
+  </state>
+  <state d2p1:type="NodeState" xmlns:d2p1="http://www.w3.org/2001/XMLSchema-instance">
+    <position>
+      <x>215.6924</x>
+      <z>145.568237</z>
+    </position>
+    <id>83907194</id>
+    <prefabName>Gravel Road</prefabName>
+    <flags>Created End Moveable OnGround OneWayOut OneWayIn</flags>
+    <segmentsList>33576</segmentsList>
+  </state>
+  <state d2p1:type="NodeState" xmlns:d2p1="http://www.w3.org/2001/XMLSchema-instance">
+    <position>
+      <x>269.9019</x>
+      <z>161.059052</z>
+    </position>
+    <id>83907905</id>
+    <prefabName>Gravel Road</prefabName>
+    <flags>Created End Moveable OnGround OneWayOut OneWayIn</flags>
+    <segmentsList>36038</segmentsList>
+  </state>
+  <state d2p1:type="SegmentState" xmlns:d2p1="http://www.w3.org/2001/XMLSchema-instance">
+    <position>
+      <x>267.811</x>
+      <z>116.3866</z>
+    </position>
+    <id>100697184</id>
+    <prefabName>Gravel Road</prefabName>
+    <startNodeId>8518</startNodeId>
+    <endNodeId>7572</endNodeId>
+    <startPosition>
+      <x>285.2618</x>
+      <z>106.615753</z>
+    </startPosition>
+    <endPosition>
+      <x>250.3602</x>
+      <z>126.157448</z>
+    </endPosition>
+    <startDirection>
+      <x>-0.8725401</x>
+      <z>0.488542438</z>
+    </startDirection>
+    <endDirection>
+      <x>0.8725401</x>
+      <z>-0.488542438</z>
+    </endDirection>
+    <startNode>8518</startNode>
+    <endNode>7572</endNode>
+  </state>
+  <state d2p1:type="SegmentState" xmlns:d2p1="http://www.w3.org/2001/XMLSchema-instance">
+    <position>
+      <x>240.589355</x>
+      <z>108.70665</z>
+    </position>
+    <id>100674383</id>
+    <prefabName>Gravel Road</prefabName>
+    <startNodeId>7572</startNodeId>
+    <endNodeId>21424</endNodeId>
+    <startPosition>
+      <x>250.3602</x>
+      <z>126.157448</z>
+    </startPosition>
+    <endPosition>
+      <x>230.8185</x>
+      <z>91.2558441</z>
+    </endPosition>
+    <startDirection>
+      <x>-0.488542438</x>
+      <z>-0.8725401</z>
+    </startDirection>
+    <endDirection>
+      <x>0.488542438</x>
+      <z>0.8725401</z>
+    </endDirection>
+    <startNode>7572</startNode>
+    <endNode>21424</endNode>
+  </state>
+  <state d2p1:type="SegmentState" xmlns:d2p1="http://www.w3.org/2001/XMLSchema-instance">
+    <position>
+      <x>233.0263</x>
+      <z>135.862839</z>
+    </position>
+    <id>100696872</id>
+    <prefabName>Gravel Road</prefabName>
+    <startNodeId>7572</startNodeId>
+    <endNodeId>21114</endNodeId>
+    <startPosition>
+      <x>250.3602</x>
+      <z>126.157448</z>
+    </startPosition>
+    <endPosition>
+      <x>215.6924</x>
+      <z>145.568237</z>
+    </endPosition>
+    <startDirection>
+      <x>-0.8725401</x>
+      <z>0.488542438</z>
+    </startDirection>
+    <endDirection>
+      <x>0.8725401</x>
+      <z>-0.488542438</z>
+    </endDirection>
+    <startNode>7572</startNode>
+    <endNode>21114</endNode>
+  </state>
+  <state d2p1:type="SegmentState" xmlns:d2p1="http://www.w3.org/2001/XMLSchema-instance">
+    <position>
+      <x>260.131042</x>
+      <z>143.608246</z>
+    </position>
+    <id>100699334</id>
+    <prefabName>Gravel Road</prefabName>
+    <startNodeId>7572</startNodeId>
+    <endNodeId>21825</endNodeId>
+    <startPosition>
+      <x>250.3602</x>
+      <z>126.157448</z>
+    </startPosition>
+    <endPosition>
+      <x>269.9019</x>
+      <z>161.059052</z>
+    </endPosition>
+    <startDirection>
+      <x>0.488542438</x>
+      <z>0.8725401</z>
+    </startDirection>
+    <endDirection>
+      <x>-0.488542438</x>
+      <z>-0.8725401</z>
+    </endDirection>
+    <startNode>7572</startNode>
+    <endNode>21825</endNode>
+  </state>
+</Selection>

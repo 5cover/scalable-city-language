@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Various types of objects. -->
+<Selection>
+  <center>
+    <x>89.11902</x>
+    <z>781.772339</z>
+  </center>
+  <version>2.10.8</version>
+  <state d2p1:type="BuildingState" xmlns:d2p1="http://www.w3.org/2001/XMLSchema-instance">
+    <position>
+      <x>93.07153</x>
+      <z>785.0244</z>
+    </position>
+    <angle>-5.6548667</angle>
+    <id>16816209</id>
+    <prefabName>Boulder 02</prefabName>
+    <flags>Created Original FixedHeight ZonesUpdated</flags>
+    <length>2</length>
+  </state>
+  <state d2p1:type="NodeState" xmlns:d2p1="http://www.w3.org/2001/XMLSchema-instance">
+    <position>
+      <x>71.1316</x>
+      <z>792.1354</z>
+    </position>
+    <angle>0</angle>
+    <id>83915379</id>
+    <prefabName>Gravel Road</prefabName>
+    <flags>Created End Moveable OnGround OneWayOut OneWayIn</flags>
+    <segmentsList>21180</segmentsList>
+  </state>
+  <state d2p1:type="BuildingState" xmlns:d2p1="http://www.w3.org/2001/XMLSchema-instance">
+    <position>
+      <x>147.848267</x>
+      <z>780.299866</z>
+    </position>
+    <angle>0</angle>
+    <id>16811972</id>
+    <prefabName>Wind Turbine</prefabName>
+    <flags>Created FixedHeight Completed ZonesUpdated</flags>
+    <length>7</length>
+  </state>
+  <state d2p1:type="TreeState" xmlns:d2p1="http://www.w3.org/2001/XMLSchema-instance">
+    <position>
+      <x>115.751953</x>
+      <z>783.6328</z>
+    </position>
+    <angle>0</angle>
+    <id>184668418</id>
+    <prefabName>Tree3variant</prefabName>
+  </state>
+  <state d2p1:type="NodeState" xmlns:d2p1="http://www.w3.org/2001/XMLSchema-instance">
+    <position>
+      <x>23.1381569</x>
+      <z>791.3421</z>
+    </position>
+    <angle>0</angle>
+    <id>83912895</id>
+    <prefabName>Gravel Road</prefabName>
+    <flags>Created End Moveable OnGround OneWayOut OneWayIn</flags>
+    <segmentsList>21180</segmentsList>
+  </state>
+  <state d2p1:type="SegmentState" xmlns:d2p1="http://www.w3.org/2001/XMLSchema-instance">
+    <position>
+      <x>47.13488</x>
+      <z>791.7388</z>
+    </position>
+    <angle>0</angle>
+    <id>100684476</id>
+    <prefabName>Gravel Road</prefabName>
+    <startNodeId>29299</startNodeId>
+    <endNodeId>26815</endNodeId>
+    <startPosition>
+      <x>71.1316</x>
+      <z>792.1354</z>
+    </startPosition>
+    <endPosition>
+      <x>23.1381569</x>
+      <z>791.3421</z>
+    </endPosition>
+    <startDirection>
+      <x>-0.999863446</x>
+      <z>-0.0165267289</z>
+    </startDirection>
+    <endDirection>
+      <x>0.999863446</x>
+      <z>0.0165267289</z>
+    </endDirection>
+    <treeInfoName />
+    <startNode>29299</startNode>
+    <endNode>26815</endNode>
+  </state>
+</Selection>

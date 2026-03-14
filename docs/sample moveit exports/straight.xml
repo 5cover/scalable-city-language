@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Straight dirt road. -->
+<Selection>
+  <center>
+    <x>-179.109116</x>
+    <z>-468.32666</z>
+  </center>
+  <version>2.10.8</version>
+  <state d2p1:type="NodeState" xmlns:d2p1="http://www.w3.org/2001/XMLSchema-instance">
+    <position>
+      <x>-218.897217</x>
+      <z>-464.214874</z>
+    </position>
+    <id>83886080</id>
+    <prefabName>Gravel Road</prefabName>
+    <flags>Created End Moveable OnGround OneWayOut OneWayIn</flags>
+    <segmentsList>0</segmentsList>
+  </state>
+  <state d2p1:type="NodeState" xmlns:d2p1="http://www.w3.org/2001/XMLSchema-instance">
+    <position>
+      <x>-139.321014</x>
+      <z>-472.438416</z>
+    </position>
+    <id>83886081</id>
+    <prefabName>Gravel Road</prefabName>
+    <flags>Created End Moveable OnGround OneWayOut OneWayIn</flags>
+    <segmentsList>0</segmentsList>
+  </state>
+  <state d2p1:type="SegmentState" xmlns:d2p1="http://www.w3.org/2001/XMLSchema-instance">
+    <position>
+      <x>-179.109116</x>
+      <z>-468.32666</z>
+    </position>
+    <id>100663296</id>
+    <prefabName>Gravel Road</prefabName>
+    <startPosition>
+      <x>-139.321014</x>
+      <z>-472.438416</z>
+    </startPosition>
+    <endPosition>
+      <x>-218.897217</x>
+      <z>-464.214874</z>
+    </endPosition>
+    <startDirection>
+      <x>-0.994702637</x>
+      <z>0.102794163</z>
+    </startDirection>
+    <endDirection>
+      <x>0.994702637</x>
+      <z>-0.102794163</z>
+    </endDirection>
+    <startNode>0</startNode>
+    <endNode>1</endNode>
+  </state>
+</Selection>
