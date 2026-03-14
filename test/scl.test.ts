@@ -75,7 +75,7 @@ const isConnected = (network: BuildResult): boolean => {
 await test('line road exports a valid simple network', () => {
     const canvas = createCanvas({
         maxSegmentLength: 200,
-        defaultRoad: {
+        road: {
             prefabName: 'Gravel Road',
             flags: 'Created End Moveable OnGround OneWayOut OneWayIn',
         },
@@ -234,7 +234,7 @@ await test('omitted y does not emit y in XML', () => {
 await test('smith st spiral composition compiles into a connected network', () => {
     const canvas = createCanvas({
         maxSegmentLength: 96,
-        defaultRoad: {
+        road: {
             prefabName: 'Gravel Road',
             flags: 'Created End Moveable OnGround OneWayOut OneWayIn',
         },

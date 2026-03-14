@@ -56,12 +56,12 @@ const createIntersection = (left: Shape, right: Shape, leftT: number, rightT: nu
 };
 
 const intersectLineLine = (left: Shape, right: Shape): ShapeIntersection[] => {
-    const leftFig = left.figure as Extract<Figure, { kind: 'line' }>;
-    const rightFig = right.figure as Extract<Figure, { kind: 'line' }>;
-    const p = point2(leftFig.start.x, leftFig.start.z);
-    const q = point2(rightFig.start.x, rightFig.start.z);
-    const r = point2(leftFig.end.x - leftFig.start.x, leftFig.end.z - leftFig.start.z);
-    const s = point2(rightFig.end.x - rightFig.start.x, rightFig.end.z - rightFig.start.z);
+    const a = (left.figure as Extract<Figure, { kind: 'line' }>).params;
+    const b = (right.figure as Extract<Figure, { kind: 'line' }>).params;
+    const p = point2(a.start.x, a.start.z);
+    const q = point2(b.start.x, b.start.z);
+    const r = point2(a.end.x - a.start.x, a.end.z - a.start.z);
+    const s = point2(b.end.x - b.start.x, b.end.z - b.start.z);
     const rxs = cross2(r, s);
     const qMinusP = subtract2(q, p);
     const qpxr = cross2(qMinusP, r);
@@ -96,8 +96,10 @@ const intersectLineLine = (left: Shape, right: Shape): ShapeIntersection[] => {
 };
 
 const intersectLineCircle = (left: Shape, right: Shape): ShapeIntersection[] => {
-    const line = left.figure.kind === 'line' ? left.figure : (right.figure as Extract<Figure, { kind: 'line' }>);
-    const circle = left.figure.kind === 'circle' ? left.figure : (right.figure as Extract<Figure, { kind: 'circle' }>);
+    const line = (left.figure.kind === 'line' ? left.figure : (right.figure as Extract<Figure, { kind: 'line' }>))
+        .params;
+    const circle = (left.figure.kind === 'circle' ? left.figure : (right.figure as Extract<Figure, { kind: 'circle' }>))
+        .params;
     const lineIsLeft = left.figure.kind === 'line';
     const start = point2(line.start.x, line.start.z);
     const end = point2(line.end.x, line.end.z);
@@ -140,15 +142,15 @@ const intersectLineCircle = (left: Shape, right: Shape): ShapeIntersection[] => 
 };
 
 const intersectCircleCircle = (left: Shape, right: Shape): ShapeIntersection[] => {
-    const a = left.figure as Extract<Figure, { kind: 'circle' }>;
-    const b = right.figure as Extract<Figure, { kind: 'circle' }>;
+    const a = (left.figure as Extract<Figure, { kind: 'circle' }>).params;
+    const b = (right.figure as Extract<Figure, { kind: 'circle' }>).params;
     const centerA = point2(a.center.x, a.center.z);
     const centerB = point2(b.center.x, b.center.z);
     const distance = distance2(centerA, centerB);
 
     invariant(
         !(distance <= POSITION_EPSILON && nearlyEqual(a.radius, b.radius)),
-        `Overlapping circles are not supported (${a.id}, ${b.id}).`
+        `Overlapping circles are not supported (${left.figure.id}, ${right.figure.id}).`
     );
 
     if (distance > a.radius + b.radius + POSITION_EPSILON) {
@@ -248,21 +250,22 @@ const scanRoots = (fn: (value: number) => number, sampleCount: number): number[]
 };
 
 const intersectLineSpiral = (left: Shape, right: Shape): ShapeIntersection[] => {
-    const line = left.figure.kind === 'line' ? left.figure : (right.figure as Extract<Figure, { kind: 'line' }>);
-    const spiral = left.figure.kind === 'spiral' ? left : right;
+    const line = (left.figure.kind === 'line' ? left.figure : (right.figure as Extract<Figure, { kind: 'line' }>))
+        .params;
+    const spiralShape = left.figure.kind === 'spiral' ? left : right;
     const lineIsLeft = left.figure.kind === 'line';
     const start = point2(line.start.x, line.start.z);
     const direction = point2(line.end.x - line.start.x, line.end.z - line.start.z);
     const directionLengthSquared = dot2(direction, direction);
     const roots = scanRoots(t => {
-        const point = spiral.pointAt(t);
+        const point = spiralShape.pointAt(t);
         return cross2(subtract2(point2(point.x, point.z), start), direction);
-    }, shapeSampleCount(spiral));
+    }, shapeSampleCount(spiralShape));
 
     return dedupeIntersections(
         roots
             .map(spiralT => {
-                const point = spiral.pointAt(spiralT);
+                const point = spiralShape.pointAt(spiralT);
                 const lineT = dot2(subtract2(point2(point.x, point.z), start), direction) / directionLengthSquared;
                 return { lineT, spiralT };
             })
@@ -278,18 +281,19 @@ const intersectLineSpiral = (left: Shape, right: Shape): ShapeIntersection[] => 
 };
 
 const intersectCircleSpiral = (left: Shape, right: Shape): ShapeIntersection[] => {
-    const circle = left.figure.kind === 'circle' ? left.figure : (right.figure as Extract<Figure, { kind: 'circle' }>);
-    const spiral = left.figure.kind === 'spiral' ? left : right;
+    const circle = (left.figure.kind === 'circle' ? left.figure : (right.figure as Extract<Figure, { kind: 'circle' }>))
+        .params;
+    const spiralShape = left.figure.kind === 'spiral' ? left : right;
     const circleIsLeft = left.figure.kind === 'circle';
     const center = point2(circle.center.x, circle.center.z);
     const roots = scanRoots(t => {
-        const point = spiral.pointAt(t);
+        const point = spiralShape.pointAt(t);
         return distance2(point2(point.x, point.z), center) - circle.radius;
-    }, shapeSampleCount(spiral));
+    }, shapeSampleCount(spiralShape));
 
     return dedupeIntersections(
         roots.map(spiralT => {
-            const point = spiral.pointAt(spiralT);
+            const point = spiralShape.pointAt(spiralT);
             const circleT = wrapClosedParam(
                 Math.atan2(point.z - circle.center.z, point.x - circle.center.x) / (Math.PI * 2)
             );

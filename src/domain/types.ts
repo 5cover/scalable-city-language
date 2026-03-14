@@ -7,12 +7,6 @@ export interface Point3 extends Point2 {
     readonly y?: number | undefined;
 }
 
-export interface RoadStyleInput {
-    readonly prefabName?: string;
-    readonly flags?: string;
-    readonly junctionFlags?: string;
-}
-
 export interface RoadStyle {
     readonly prefabName: string;
     readonly flags: string;
@@ -20,33 +14,32 @@ export interface RoadStyle {
 }
 
 export interface CanvasOptions {
-    readonly maxSegmentLength?: number;
-    readonly defaultRoad?: RoadStyleInput;
+    readonly maxSegmentLength: number;
+    readonly road: RoadStyle;
 }
 
-interface RoadFigureInputBase {
-    readonly road?: RoadStyleInput;
-    readonly maxSegmentLength?: number;
+export interface FigureInput {
+    readonly options?: CanvasOptions | undefined;
 }
 
-export interface LineRoadInput extends RoadFigureInputBase {
+export interface LineRoadInput extends FigureInput {
     readonly start: Point3;
     readonly end: Point3;
 }
 
-export interface RayRoadInput extends RoadFigureInputBase {
+export interface RayRoadInput extends FigureInput {
     readonly start: Point3;
     readonly angleDeg: number;
     readonly length: number;
     readonly endY?: number;
 }
 
-export interface CircleRoadInput extends RoadFigureInputBase {
+export interface CircleRoadInput extends FigureInput {
     readonly center: Point3;
     readonly radius: number;
 }
 
-export interface ArchimedeanSpiralRoadInput extends RoadFigureInputBase {
+export interface ArchimedeanSpiralRoadInput extends FigureInput {
     readonly center: Point3;
     readonly startRadius: number;
     readonly pitch: number;
@@ -57,37 +50,45 @@ export interface ArchimedeanSpiralRoadInput extends RoadFigureInputBase {
 
 export type RotationDirection = 'clockwise' | 'counterclockwise';
 
-interface FigureBase<Kind extends string> {
-    readonly id: number;
-    readonly kind: Kind;
-}
-
-export interface LineRoadFigure extends FigureBase<'line'> {
+interface LineRoadFigure {
     readonly start: Point3;
     readonly end: Point3;
-    readonly road: RoadStyle;
-    readonly maxSegmentLength?: number;
 }
 
-export interface CircleRoadFigure extends FigureBase<'circle'> {
+interface CircleRoadFigure {
     readonly center: Point3;
     readonly radius: number;
-    readonly road: RoadStyle;
-    readonly maxSegmentLength?: number;
 }
 
-export interface SpiralRoadFigure extends FigureBase<'spiral'> {
+interface SpiralRoadFigure {
     readonly center: Point3;
     readonly startRadius: number;
     readonly pitch: number;
     readonly direction: RotationDirection;
     readonly startAngleDeg: number;
     readonly arcLength: number;
-    readonly road: RoadStyle;
-    readonly maxSegmentLength?: number;
 }
 
-export type Figure = LineRoadFigure | CircleRoadFigure | SpiralRoadFigure;
+export type FigureKind = keyof FigureParams;
+
+export interface FigureParams {
+    line: LineRoadFigure;
+    circle: CircleRoadFigure;
+    spiral: SpiralRoadFigure;
+}
+
+export interface FigureOf<Kind extends FigureKind> {
+    readonly id: number;
+    readonly kind: Kind;
+    readonly options: CanvasOptions;
+    readonly params: FigureParams[Kind];
+}
+
+type Figures = {
+    [K in FigureKind]: FigureOf<K>;
+};
+
+export type Figure<K extends FigureKind = FigureKind> = Figures[K];
 
 export interface BuildSettings {
     readonly maxSegmentLength: number;

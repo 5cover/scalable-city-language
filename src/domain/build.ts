@@ -148,8 +148,8 @@ export const buildNetwork = (settings: BuildSettings): BuildResult => {
 
         const start = shape.pointAt(startT);
         const end = shape.pointAt(endT);
-        const startNode = getOrCreateNode(start, figure.road);
-        const endNode = getOrCreateNode(end, figure.road);
+        const startNode = getOrCreateNode(start, figure.options.road);
+        const endNode = getOrCreateNode(end, figure.options.road);
         const key = `segment-${segments.length}`;
         const midpointLength = (startLength + endLength) / 2;
         const midpoint = shape.pointAt(shape.parameterAtLength(midpointLength));
@@ -158,7 +158,7 @@ export const buildNetwork = (settings: BuildSettings): BuildResult => {
 
         segments.push({
             key,
-            prefabName: figure.road.prefabName,
+            prefabName: figure.options.road.prefabName,
             startNodeKey: startNode.key,
             endNodeKey: endNode.key,
             start,
@@ -175,7 +175,7 @@ export const buildNetwork = (settings: BuildSettings): BuildResult => {
 
     for (const state of shapeStates) {
         const splitParameters = uniqueSortedParameters(state.splitParameters, state.shape.isClosed);
-        const maxSegmentLength = state.figure.maxSegmentLength ?? settings.maxSegmentLength;
+        const maxSegmentLength = state.figure.options.maxSegmentLength;
         invariant(maxSegmentLength > 0, `Shape ${state.figure.id} must have a positive maxSegmentLength.`);
 
         if (state.shape.isClosed) {
