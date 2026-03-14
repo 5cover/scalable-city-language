@@ -1,5 +1,6 @@
 import type { BuildResult, Point2, Point3 } from '../../domain/types.js';
 import { DEFAULT_MOVE_IT_VERSION } from '../../utils/constants.js';
+import { normalize2, point2, subtract2 } from '../../utils/math.js';
 
 export interface CompileToMoveItOptions {
     readonly version?: string;
@@ -32,6 +33,17 @@ const appendPoint = (lines: string[], tagName: string, point: Point2 | Point3, i
 };
 
 const shortId = (fullId: number): number => fullId & 0xffff;
+
+const segmentDirections = (start: Point3, control: Point3, end: Point3): { start: Point2; end: Point2 } => {
+    const startDirection = normalize2(subtract2(point2(control.x, control.z), point2(start.x, start.z)));
+    const endDirection = normalize2(subtract2(point2(control.x, control.z), point2(end.x, end.z)));
+    const fallback = normalize2(subtract2(point2(end.x, end.z), point2(start.x, start.z)));
+
+    return {
+        start: startDirection.x === 0 && startDirection.z === 0 ? fallback : startDirection,
+        end: endDirection.x === 0 && endDirection.z === 0 ? point2(-fallback.x, -fallback.z) : endDirection,
+    };
+};
 
 export const compileToMoveIt = (network: BuildResult, options: CompileToMoveItOptions = {}): string => {
     const nodeIds = new Map<string, number>();
@@ -93,15 +105,16 @@ export const compileToMoveIt = (network: BuildResult, options: CompileToMoveItOp
         if (segmentId === undefined || startNodeId === undefined || endNodeId === undefined) {
             continue;
         }
+        const directions = segmentDirections(segment.start, segment.control, segment.end);
 
         lines.push('  <state xsi:type="SegmentState">');
-        appendPoint(lines, 'position', segment.midpoint, '    ');
+        appendPoint(lines, 'position', segment.control, '    ');
         lines.push(`    <id>${segmentId}</id>`);
         lines.push(`    <prefabName>${escapeXml(segment.prefabName)}</prefabName>`);
         appendPoint(lines, 'startPosition', segment.start, '    ');
         appendPoint(lines, 'endPosition', segment.end, '    ');
-        appendPoint(lines, 'startDirection', segment.startDirection, '    ');
-        appendPoint(lines, 'endDirection', segment.endDirection, '    ');
+        appendPoint(lines, 'startDirection', directions.start, '    ');
+        appendPoint(lines, 'endDirection', directions.end, '    ');
         lines.push(`    <startNode>${shortId(startNodeId)}</startNode>`);
         lines.push(`    <endNode>${shortId(endNodeId)}</endNode>`);
         lines.push('  </state>');

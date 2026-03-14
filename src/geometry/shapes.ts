@@ -10,6 +10,7 @@ export interface Shape<T extends Figure = Figure> {
     readonly totalLength: number;
     pointAt(t: number): Point3;
     tangentAt(t: number): Point2;
+    endTangentAt(t: number): Point2;
     lengthAt(t: number): number;
     parameterAtLength(length: number): number;
 }
@@ -51,6 +52,9 @@ const createLineShape = (figure: Figure<'line'>): Shape => {
         tangentAt(): Point2 {
             return normalize2(point2(deltaX, deltaZ));
         },
+        endTangentAt(): Point2 {
+            return normalize2(point2(-deltaX, -deltaZ));
+        },
         lengthAt(t): number {
             return totalLength * clamp(t, 0, 1);
         },
@@ -80,6 +84,11 @@ const createCircleShape = (figure: Figure<'circle'>): Shape => {
             const wrapped = wrapClosedParam(t);
             const angle = wrapped * Math.PI * 2;
             return normalize2(point2(-Math.sin(angle), Math.cos(angle)));
+        },
+        endTangentAt(t): Point2 {
+            const wrapped = wrapClosedParam(t);
+            const angle = wrapped * Math.PI * 2;
+            return normalize2(point2(Math.sin(angle), -Math.cos(angle)));
         },
         lengthAt(t): number {
             const wrapped = wrapClosedParam(t);
@@ -156,6 +165,10 @@ const createSpiralShape = (figure: Figure<'spiral'>): Shape => {
         },
         tangentAt(t): Point2 {
             return normalize2(pointAndDerivativeAt(t).derivative);
+        },
+        endTangentAt(t): Point2 {
+            const derivative = pointAndDerivativeAt(t).derivative;
+            return normalize2(point2(-derivative.x, -derivative.z));
         },
         lengthAt(t): number {
             const theta = totalTheta * clamp(t, 0, 1);

@@ -9,7 +9,7 @@ You add line roads, rays, circles, and Archimedean spirals to a canvas. SCL reso
 This repository currently implements:
 
 - a strict TypeScript library package
-- shape authoring through a small canvas API
+- figure authoring through a small canvas API
 - line, ray, circle, and Archimedean spiral roads
 - automatic intersection detection for line/line, line/circle, circle/circle, line/spiral, and circle/spiral
 - automatic node derivation from endpoints, intersections, and max-length subdivision
@@ -73,10 +73,10 @@ const xml = compileToMoveIt(network);
 
 ## API Notes
 
-- `createCanvas(options)` creates the authoring surface and stores declarative shapes.
+- `createCanvas(options)` creates the authoring surface and stores declarative figures.
 - `canvas.addLineRoad(...)`, `canvas.addRayRoad(...)`, `canvas.addCircleRoad(...)`, and `canvas.addArchimedeanSpiralRoad(...)` add shapes only. Users never create nodes directly.
-- `canvas.build()` resolves the shape set into a network IR containing nodes, segments, and a computed center.
-- `compileToMoveIt(network)` turns that IR into Move It XML with deterministic node and segment IDs.
+- `canvas.build()` resolves the figure set into a network IR containing nodes, three-point segments `(start, control, end)`, and a computed center.
+- `compileToMoveIt(network)` turns that IR into Move It XML with deterministic node and segment IDs, writing segment `control` to `<position>` and deriving Hermite directions from it.
 - Coordinates are meters.
 - `x` is east/west, `z` is north/south, and optional `y` is elevation.
 - If `y` is omitted, SCL omits `<y>` in XML so Move It can snap that position to terrain height.
@@ -97,7 +97,7 @@ pnpm run test
 
 ## What Is Implemented Now
 
-- shared curve-based geometry handling for lines, circles, and spirals
+- shared parametric shape handling for lines, circles, and spirals
 - one segmentation pipeline for intersections and max segment length splitting
 - configurable canvas-level defaults and per-shape overrides for prefab name, flags, and junction flags
 - deterministic Move It XML output using a single root `xmlns:xsi` declaration

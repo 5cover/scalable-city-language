@@ -29,6 +29,7 @@ export const point3 = (x: number, z: number, y: number | undefined): Point3 => {
 
 export const subtract2 = (left: Point2, right: Point2): Point2 => point2(left.x - right.x, left.z - right.z);
 export const scale2 = (value: Point2, scalar: number): Point2 => point2(value.x * scalar, value.z * scalar);
+export const add2 = (left: Point2, right: Point2): Point2 => point2(left.x + right.x, left.z + right.z);
 export const dot2 = (left: Point2, right: Point2): number => left.x * right.x + left.z * right.z;
 export const cross2 = (left: Point2, right: Point2): number => left.x * right.z - left.z * right.x;
 export const length2 = (value: Point2): number => Math.hypot(value.x, value.z);

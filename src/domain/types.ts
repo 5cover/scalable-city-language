@@ -109,10 +109,8 @@ export interface NetworkSegment {
     readonly startNodeKey: string;
     readonly endNodeKey: string;
     readonly start: Point3;
+    readonly control: Point3;
     readonly end: Point3;
-    readonly midpoint: Point3;
-    readonly startDirection: Point2;
-    readonly endDirection: Point2;
     readonly sourceFigId: number;
 }
 

@@ -2,7 +2,7 @@ import { createShape, type Shape } from '../geometry/shapes.js';
 import { intersectShapes } from '../geometry/intersections.js';
 import { invariant } from '../utils/assert.js';
 import { NODE_MERGE_EPSILON, PARAMETER_EPSILON } from '../utils/constants.js';
-import { negate2, wrapClosedParam } from '../utils/math.js';
+import { cross2, point3, scale2, subtract2, wrapClosedParam } from '../utils/math.js';
 import type {
     BuildResult,
     BuildSettings,
@@ -157,13 +157,30 @@ export const buildNetwork = (settings: BuildSettings): BuildResult => {
 
         const start = shape.pointAt(startT);
         const end = shape.pointAt(endT);
+        const controlSample = shape.pointAt(shape.parameterAtLength((startLength + endLength) / 2));
+        const startTangent = shape.tangentAt(startT);
+        const endDirection = shape.endTangentAt(endT);
+        const delta = subtract2({ x: end.x, z: end.z }, { x: start.x, z: start.z });
+        const denominator = cross2(startTangent, endDirection);
+        const controlXZ =
+            Math.abs(denominator) <= PARAMETER_EPSILON
+                ? {
+                      x: (start.x + end.x) / 2,
+                      z: (start.z + end.z) / 2,
+                  }
+                : (() => {
+                      const startScale = cross2(delta, endDirection) / denominator;
+                      const point = scale2(startTangent, startScale);
+
+                      return {
+                          x: start.x + point.x,
+                          z: start.z + point.z,
+                      };
+                  })();
+        const control = point3(controlXZ.x, controlXZ.z, controlSample.y);
         const startNode = getOrCreateNode(start, figure.options.road);
         const endNode = getOrCreateNode(end, figure.options.road);
         const key = `segment-${segments.length}`;
-        const midpointLength = (startLength + endLength) / 2;
-        const midpoint = shape.pointAt(shape.parameterAtLength(midpointLength));
-        const startDirection = shape.tangentAt(startT);
-        const endDirection = negate2(shape.tangentAt(endT));
 
         segments.push({
             key,
@@ -171,10 +188,8 @@ export const buildNetwork = (settings: BuildSettings): BuildResult => {
             startNodeKey: startNode.key,
             endNodeKey: endNode.key,
             start,
+            control,
             end,
-            midpoint,
-            startDirection,
-            endDirection,
             sourceFigId: figure.id,
         });
 

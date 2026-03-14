@@ -25,6 +25,11 @@ const segmentLength = (start: Point3, end: Point3): number => {
     return Math.hypot(end.x - start.x, end.z - start.z);
 };
 
+const controlDistanceFromLine = (start: Point3, control: Point3, end: Point3): number => {
+    const numerator = Math.abs((end.z - start.z) * control.x - (end.x - start.x) * control.z + end.x * start.z - end.z * start.x);
+    return numerator / Math.hypot(end.z - start.z, end.x - start.x);
+};
+
 const findNodeAt = (network: BuildResult, x: number, z: number): NetworkNode | undefined => {
     return network.nodes.find(node => {
         return Math.abs(node.position.x - x) <= EPSILON && Math.abs(node.position.z - z) <= EPSILON;
@@ -96,6 +101,7 @@ await test('line road exports a valid simple network', () => {
     assert.equal(countOccurrences(xml, 'xmlns:xsi='), 1);
     assert.match(xml, /<startNode>0<\/startNode>/);
     assert.match(xml, /<endNode>1<\/endNode>/);
+    assert.ok(controlDistanceFromLine(network.segments[0]!.start, network.segments[0]!.control, network.segments[0]!.end) <= EPSILON);
 });
 
 await test('circle road gets segmented and closes correctly', () => {
@@ -229,6 +235,26 @@ await test('omitted y does not emit y in XML', () => {
     const xml = compileToMoveIt(canvas.build());
 
     assert.equal(xml.includes('<y>'), false);
+});
+
+await test('curved segment exports control point instead of geometric midpoint', () => {
+    const canvas = createCanvas({
+        maxSegmentLength: 200,
+    });
+
+    canvas.addCircleRoad({
+        center: { x: 0, z: 0 },
+        radius: 20,
+    });
+
+    const network = canvas.build();
+    const curvedSegment = network.segments[0];
+
+    assert.ok(curvedSegment);
+    assert.ok(controlDistanceFromLine(curvedSegment.start, curvedSegment.control, curvedSegment.end) > 1);
+
+    const xml = compileToMoveIt(network);
+    assert.match(xml, /<position>/);
 });
 
 await test('smith st spiral composition compiles into a connected network', () => {
