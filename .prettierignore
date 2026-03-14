@@ -1,5 +1,0 @@
-dist
-dist-test
-node_modules
-pnpm-lock.yaml
-docs/prompt.md

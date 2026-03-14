@@ -12,13 +12,13 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "clean": "rm -rf dist dist-test",
-    "lint": "eslint src test eslint.config.mjs",
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist",
+    "lint": "eslint src test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "pnpm run test:compile && node --test dist-test/test",
-    "test:compile": "rm -rf dist-test && tsc -p tsconfig.test.json"
+    "test": "tsx --test",
+    "prepare": "eslint && tsx --test && tsc -p tsconfig.build.json"
   },
   "keywords": [],
   "author": "5cover",
@@ -31,11 +31,48 @@
     "dist"
   ],
   "devDependencies": {
+    "@eslint/compat": "^2.0.3",
     "@types/node": "^24.0.0",
     "@typescript-eslint/eslint-plugin": "^8.31.0",
     "@typescript-eslint/parser": "^8.31.0",
     "eslint": "^9.24.0",
+    "jiti": "^2.6.1",
     "prettier": "^3.5.3",
-    "typescript": "^5.8.3"
+    "tsx": "^4.21.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.57.0"
+  },
+  "prettier": {
+    "printWidth": 120,
+    "tabWidth": 2,
+    "singleQuote": true,
+    "arrowParens": "avoid",
+    "bracketSameLine": true,
+    "trailingComma": "es5",
+    "overrides": [
+      {
+        "files": "**/*.ts",
+        "options": {
+          "parser": "typescript"
+        }
+      },
+      {
+        "files": [
+          "**/*.ts",
+          "**/*.tsx",
+          "**/*.js",
+          "**/*.jsx",
+          "**/*.astro",
+          "**/*.mjs",
+          "**/*.cjs",
+          "**/*.css",
+          "**/*.sass",
+          "**/*.scss"
+        ],
+        "options": {
+          "tabWidth": 4
+        }
+      }
+    ]
   }
 }
