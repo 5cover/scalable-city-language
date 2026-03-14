@@ -1,7 +1,7 @@
 import type { BuildResult, Point2, Point3 } from '../../domain/types.js';
 import { DEFAULT_MOVE_IT_VERSION } from '../../utils/constants.js';
 
-interface CompileToMoveItOptions {
+export interface CompileToMoveItOptions {
     readonly version?: string;
 }
 
@@ -33,7 +33,7 @@ const appendPoint = (lines: string[], tagName: string, point: Point2 | Point3, i
 
 const shortId = (fullId: number): number => fullId & 0xffff;
 
-const compileToMoveIt = (network: BuildResult, options: CompileToMoveItOptions = {}): string => {
+export const compileToMoveIt = (network: BuildResult, options: CompileToMoveItOptions = {}): string => {
     const nodeIds = new Map<string, number>();
     const segmentIds = new Map<string, number>();
 
@@ -110,6 +110,3 @@ const compileToMoveIt = (network: BuildResult, options: CompileToMoveItOptions =
     lines.push('</Selection>');
     return `${lines.join('\n')}\n`;
 };
-
-export { compileToMoveIt };
-export type { CompileToMoveItOptions };

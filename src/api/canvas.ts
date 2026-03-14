@@ -37,7 +37,7 @@ const resolveRoadStyle = (
     };
 };
 
-const createCanvas = (options: CanvasOptions = {}): Canvas => {
+export const createCanvas = (options: CanvasOptions = {}): Canvas => {
     const figures: Figure[] = [];
     const nextFigId = createFigIdFactory();
     const canvasDefaults = {
@@ -136,5 +136,3 @@ const createCanvas = (options: CanvasOptions = {}): Canvas => {
         },
     };
 };
-
-export { createCanvas };

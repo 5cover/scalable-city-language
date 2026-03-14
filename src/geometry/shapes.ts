@@ -2,7 +2,7 @@ import type { CircleRoadFigure, LineRoadFigure, Point2, Point3, Figure, SpiralRo
 import { invariant } from '../utils/assert.js';
 import { MAX_ROOT_ITERATIONS, PARAMETER_EPSILON, POSITION_EPSILON } from '../utils/constants.js';
 import { degreesToRadians } from '../utils/geometry.js';
-import { clamp, lerpOptional, normalize2, point2, point3 } from '../utils/math.js';
+import { clamp, lerpOptional, normalize2, wrapClosedParam, point2, point3 } from '../utils/math.js';
 
 export interface Shape<T extends Figure = Figure> {
     readonly figure: T;
@@ -69,7 +69,7 @@ const createCircleShape = (figure: CircleRoadFigure): Shape => {
         isClosed: true,
         totalLength,
         pointAt(t): Point3 {
-            const wrapped = ((t % 1) + 1) % 1;
+            const wrapped = wrapClosedParam(t);
             const angle = wrapped * Math.PI * 2;
 
             return point3(
@@ -79,16 +79,16 @@ const createCircleShape = (figure: CircleRoadFigure): Shape => {
             );
         },
         tangentAt(t): Point2 {
-            const wrapped = ((t % 1) + 1) % 1;
+            const wrapped = wrapClosedParam(t);
             const angle = wrapped * Math.PI * 2;
             return normalize2(point2(-Math.sin(angle), Math.cos(angle)));
         },
         lengthAt(t): number {
-            const wrapped = ((t % 1) + 1) % 1;
+            const wrapped = wrapClosedParam(t);
             return wrapped * totalLength;
         },
         parameterAtLength(length): number {
-            return (((length / totalLength) % 1) + 1) % 1;
+            return wrapClosedParam(length / totalLength);
         },
     };
 };

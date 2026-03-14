@@ -2,7 +2,7 @@ import { createShape, type Shape } from '../geometry/shapes.js';
 import { intersectShapes } from '../geometry/intersections.js';
 import { invariant } from '../utils/assert.js';
 import { NODE_MERGE_EPSILON, PARAMETER_EPSILON } from '../utils/constants.js';
-import { negate2 } from '../utils/math.js';
+import { negate2, wrapClosedParam } from '../utils/math.js';
 import type { BuildResult, BuildSettings, NetworkNode, NetworkSegment, Point3, RoadStyle, Figure } from './types.js';
 
 interface NodeAccumulator {
@@ -25,7 +25,7 @@ const uniqueSortedParameters = (parameters: readonly number[], isClosed: boolean
                 return Math.min(1, Math.max(0, value));
             }
 
-            const wrapped = ((value % 1) + 1) % 1;
+            const wrapped = wrapClosedParam(value);
             return wrapped >= 1 - PARAMETER_EPSILON ? 0 : wrapped;
         })
         .sort((left, right) => left - right);
@@ -73,7 +73,7 @@ const averageCenter = (nodes: readonly NetworkNode[]): Point3 | undefined => {
           };
 };
 
-const buildNetwork = (settings: BuildSettings): BuildResult => {
+export const buildNetwork = (settings: BuildSettings): BuildResult => {
     const shapeStates: ShapeState[] = settings.figures.map(figure => {
         const shape = createShape(figure);
         return {
@@ -261,5 +261,3 @@ const buildNetwork = (settings: BuildSettings): BuildResult => {
         figs: settings.figures,
     };
 };
-
-export { buildNetwork };

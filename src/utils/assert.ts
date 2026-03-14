@@ -1,4 +1,4 @@
-const invariant: (condition: boolean, message: string) => asserts condition = (
+export const invariant: (condition: boolean, message: string) => asserts condition = (
     condition: boolean,
     message: string
 ): asserts condition => {
@@ -6,5 +6,3 @@ const invariant: (condition: boolean, message: string) => asserts condition = (
         throw new Error(message);
     }
 };
-
-export { invariant };

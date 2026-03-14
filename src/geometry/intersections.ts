@@ -8,20 +8,15 @@ import {
     PARAMETER_EPSILON,
     POSITION_EPSILON,
 } from '../utils/constants.js';
-import { clamp, cross2, distance2, dot2, nearlyEqual, point2, subtract2 } from '../utils/math.js';
+import { clamp, cross2, distance2, dot2, nearlyEqual, wrapClosedParam, point2, subtract2 } from '../utils/math.js';
 import type { Shape } from './shapes.js';
 
-interface ShapeIntersection {
+export interface ShapeIntersection {
     readonly leftFigId: number;
     readonly rightFigId: number;
     readonly leftT: number;
     readonly rightT: number;
 }
-
-const normalizeClosedParameter = (value: number): number => {
-    const wrapped = ((value % 1) + 1) % 1;
-    return wrapped >= 1 - PARAMETER_EPSILON ? 0 : wrapped;
-};
 
 const dedupeIntersections = (
     intersections: readonly ShapeIntersection[],
@@ -33,8 +28,8 @@ const dedupeIntersections = (
     for (const intersection of intersections) {
         const candidate = {
             ...intersection,
-            leftT: leftClosed ? normalizeClosedParameter(intersection.leftT) : clamp(intersection.leftT, 0, 1),
-            rightT: rightClosed ? normalizeClosedParameter(intersection.rightT) : clamp(intersection.rightT, 0, 1),
+            leftT: leftClosed ? wrapClosedParam(intersection.leftT) : clamp(intersection.leftT, 0, 1),
+            rightT: rightClosed ? wrapClosedParam(intersection.rightT) : clamp(intersection.rightT, 0, 1),
         };
         const exists = deduped.some(entry => {
             return (
@@ -133,7 +128,7 @@ const intersectLineCircle = (left: Shape, right: Shape): ShapeIntersection[] => 
                 const clamped = clamp(lineT, 0, 1);
                 const point = lineIsLeft ? left.pointAt(clamped) : right.pointAt(clamped);
                 const angle = Math.atan2(point.z - circle.center.z, point.x - circle.center.x);
-                const circleT = normalizeClosedParameter(angle / (Math.PI * 2));
+                const circleT = wrapClosedParam(angle / (Math.PI * 2));
 
                 return lineIsLeft
                     ? createIntersection(left, right, clamped, circleT)
@@ -188,8 +183,8 @@ const intersectCircleCircle = (left: Shape, right: Shape): ShapeIntersection[] =
             return createIntersection(
                 left,
                 right,
-                normalizeClosedParameter(leftAngle / (Math.PI * 2)),
-                normalizeClosedParameter(rightAngle / (Math.PI * 2))
+                wrapClosedParam(leftAngle / (Math.PI * 2)),
+                wrapClosedParam(rightAngle / (Math.PI * 2))
             );
         }),
         true,
@@ -295,7 +290,7 @@ const intersectCircleSpiral = (left: Shape, right: Shape): ShapeIntersection[] =
     return dedupeIntersections(
         roots.map(spiralT => {
             const point = spiral.pointAt(spiralT);
-            const circleT = normalizeClosedParameter(
+            const circleT = wrapClosedParam(
                 Math.atan2(point.z - circle.center.z, point.x - circle.center.x) / (Math.PI * 2)
             );
 
@@ -308,7 +303,7 @@ const intersectCircleSpiral = (left: Shape, right: Shape): ShapeIntersection[] =
     );
 };
 
-const intersectShapes = (left: Shape, right: Shape): ShapeIntersection[] => {
+export const intersectShapes = (left: Shape, right: Shape): ShapeIntersection[] => {
     if (left.figure.kind === 'line' && right.figure.kind === 'line') {
         return intersectLineLine(left, right);
     }
@@ -336,6 +331,3 @@ const intersectShapes = (left: Shape, right: Shape): ShapeIntersection[] => {
 
     return [];
 };
-
-export { intersectShapes };
-export type { ShapeIntersection };
