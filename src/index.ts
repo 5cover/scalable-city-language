@@ -1,4 +1,5 @@
 export { createCanvas } from './api/index.js';
+export { compileToMoveIt } from './compiler/moveit/index.js';
 export { polarPoint } from './utils/geometry.js';
 export type {
   ArchimedeanSpiralRoadInput,
@@ -15,3 +16,4 @@ export type {
   RoadShape,
   RoadStyleInput
 } from './domain/types.js';
+export type { CompileToMoveItOptions } from './compiler/moveit/index.js';
