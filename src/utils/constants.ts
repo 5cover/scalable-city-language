@@ -1,2 +1,9 @@
 export const DEFAULT_MAX_SEGMENT_LENGTH = 96;
 export const DEFAULT_JUNCTION_FLAGS = 'Created Junction OnGround';
+export const DEFAULT_MOVE_IT_VERSION = '2.10.8';
+export const POSITION_EPSILON = 1e-5;
+export const PARAMETER_EPSILON = 1e-6;
+export const MAX_ROOT_ITERATIONS = 48;
+export const MIN_INTERSECTION_SAMPLE_COUNT = 128;
+export const MAX_INTERSECTION_SAMPLE_COUNT = 4096;
+export const INTERSECTION_SAMPLE_SPACING = 12;
