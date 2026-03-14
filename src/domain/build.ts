@@ -3,7 +3,16 @@ import { intersectShapes } from '../geometry/intersections.js';
 import { invariant } from '../utils/assert.js';
 import { NODE_MERGE_EPSILON, PARAMETER_EPSILON } from '../utils/constants.js';
 import { negate2, wrapClosedParam } from '../utils/math.js';
-import type { BuildResult, BuildSettings, NetworkNode, NetworkSegment, Point3, RoadStyle, Figure } from './types.js';
+import type {
+    BuildResult,
+    BuildSettings,
+    NetworkNode,
+    NetworkSegment,
+    Point3,
+    RoadStyle,
+    Figure,
+    Flag,
+} from './types.js';
 
 interface NodeAccumulator {
     readonly key: string;
@@ -178,6 +187,9 @@ export const buildNetwork = (settings: BuildSettings): BuildResult => {
         const maxSegmentLength = state.figure.options.maxSegmentLength;
         invariant(maxSegmentLength > 0, `Shape ${state.figure.id} must have a positive maxSegmentLength.`);
 
+        // todo: smarter calculation for minimum piece count
+        // any segment's tangeants may not meet at an angle greater than 90°
+
         if (state.shape.isClosed) {
             const intervals =
                 splitParameters.length === 1
@@ -198,7 +210,8 @@ export const buildNetwork = (settings: BuildSettings): BuildResult => {
                 const startLength = state.shape.totalLength * startParam;
                 const endLength = state.shape.totalLength * endParam;
                 const intervalLength = endLength - startLength;
-                const pieceCount = Math.max(1, Math.ceil(intervalLength / maxSegmentLength));
+                // 4 segments is the minimum for a precise circle in CS. 2 is buggy, 3 becomes ovoid.
+                const pieceCount = Math.max(4, Math.ceil(intervalLength / maxSegmentLength));
 
                 for (let pieceIndex = 0; pieceIndex < pieceCount; pieceIndex += 1) {
                     const pieceStartLength = startLength + (intervalLength * pieceIndex) / pieceCount;
@@ -244,13 +257,18 @@ export const buildNetwork = (settings: BuildSettings): BuildResult => {
     }
 
     const nodes: NetworkNode[] = Array.from(nodeMap.values()).map(node => {
-        const flags = node.segmentKeys.length > 1 ? node.style.junctionFlags : node.style.flags;
+        const flags: Flag[] =
+            node.segmentKeys.length > 2
+                ? ['Junction']
+                : node.segmentKeys.length > 1
+                  ? ['Middle', 'Moveable', 'OnGround']
+                  : [];
 
         return {
             key: node.key,
             position: node.position,
             prefabName: node.style.prefabName,
-            flags,
+            flags: [...flags, ...node.style.flags],
         };
     });
 

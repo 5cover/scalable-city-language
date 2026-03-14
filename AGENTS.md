@@ -12,6 +12,7 @@ This repository contains the `scl` TypeScript library for authoring road shapes,
 - Users define shapes only. Nodes must always be derived from endpoints, intersections, and automatic subdivision.
 - Prefer strict, idiomatic TypeScript with immutable data and pure geometry functions.
 - Keep geometry logic centralized to avoid duplicated sampling, tangent, and subdivision behavior.
+- Make commits regularly.
 
 ## Recommended Layout
 

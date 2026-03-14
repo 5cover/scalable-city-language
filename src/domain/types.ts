@@ -7,10 +7,11 @@ export interface Point3 extends Point2 {
     readonly y?: number | undefined;
 }
 
+export type Flag = 'Created' | 'End' | 'Junction' | 'Middle' | 'OnGround' | 'Moveable' | 'OneWayOut' | 'OneWayIn';
+
 export interface RoadStyle {
     readonly prefabName: string;
-    readonly flags: string;
-    readonly junctionFlags: string;
+    readonly flags: readonly Flag[];
 }
 
 export interface CanvasOptions {
@@ -99,7 +100,7 @@ export interface NetworkNode {
     readonly key: string;
     readonly position: Point3;
     readonly prefabName: string;
-    readonly flags: string;
+    readonly flags: readonly Flag[];
 }
 
 export interface NetworkSegment {

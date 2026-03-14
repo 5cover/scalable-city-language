@@ -77,7 +77,7 @@ export const compileToMoveIt = (network: BuildResult, options: CompileToMoveItOp
         appendPoint(lines, 'position', node.position, '    ');
         lines.push(`    <id>${nodeId}</id>`);
         lines.push(`    <prefabName>${escapeXml(node.prefabName)}</prefabName>`);
-        lines.push(`    <flags>${escapeXml(node.flags)}</flags>`);
+        lines.push(`    <flags>${escapeXml(Array.from(new Set(node.flags)).join(' '))}</flags>`);
 
         for (const connectedSegmentId of segmentIdsByNode.get(node.key) ?? []) {
             lines.push(`    <segmentsList>${connectedSegmentId}</segmentsList>`);
@@ -110,3 +110,4 @@ export const compileToMoveIt = (network: BuildResult, options: CompileToMoveItOp
     lines.push('</Selection>');
     return `${lines.join('\n')}\n`;
 };
+// todo: rewrite in xml2js

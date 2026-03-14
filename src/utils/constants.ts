@@ -1,5 +1,4 @@
 export const DEFAULT_MAX_SEGMENT_LENGTH = 96;
-export const DEFAULT_JUNCTION_FLAGS = 'Created Junction OnGround';
 export const DEFAULT_MOVE_IT_VERSION = '2.10.8';
 export const POSITION_EPSILON = 1e-5;
 export const NODE_MERGE_EPSILON = 1e-4;

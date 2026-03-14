@@ -24,12 +24,10 @@ Example:
     <z>-468.32666</z>
   </center>
   <version>2.10.8</version>
-
   <!-- objects -->
   <state type="NodeState">...</state>
   <state type="NodeState">...</state>
   <state type="SegmentState">...</state>
-
 </Selection>
 ```
 
@@ -118,41 +116,36 @@ Notes:
 
 ## 5. SegmentState
 
-Represents a road segment connecting two nodes.
+Represents a road segment connecting two nodes with a spline in Hermite form (P0 = start position, P1 = end position, T0 = start tangent, T1 = end tangent).
+
+Position is the intersection point of T0 and T1, it effectively acts as a control point.
 
 Minimal working structure:
 
 ```xml
 <state xsi:type="SegmentState">
-
   <position>
     <x>...</x>
     <z>...</z>
   </position>
-
   <id>...</id>
   <prefabName>Gravel Road</prefabName>
-
   <startPosition>
     <x>...</x>
     <z>...</z>
   </startPosition>
-
   <endPosition>
     <x>...</x>
     <z>...</z>
   </endPosition>
-
   <startDirection>
     <x>...</x>
     <z>...</z>
   </startDirection>
-
   <endDirection>
     <x>...</x>
     <z>...</z>
   </endDirection>
-
   <startNode>...</startNode>
   <endNode>...</endNode>
 
@@ -271,14 +264,11 @@ Otherwise short ID collisions occur.
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <Selection xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-
   <center>
     <x>-179.109116</x>
     <z>-468.32666</z>
   </center>
-
   <version>2.10.8</version>
-
   <state xsi:type="NodeState">
     <position>
       <x>-218.897217</x>
@@ -289,7 +279,6 @@ Otherwise short ID collisions occur.
     <flags>Created End Moveable OnGround OneWayOut OneWayIn</flags>
     <segmentsList>0</segmentsList>
   </state>
-
   <state xsi:type="NodeState">
     <position>
       <x>-139.321014</x>
@@ -300,7 +289,6 @@ Otherwise short ID collisions occur.
     <flags>Created End Moveable OnGround OneWayOut OneWayIn</flags>
     <segmentsList>0</segmentsList>
   </state>
-
   <state xsi:type="SegmentState">
     <position>
       <x>-179.109116</x>
@@ -308,32 +296,25 @@ Otherwise short ID collisions occur.
     </position>
     <id>100663296</id>
     <prefabName>Gravel Road</prefabName>
-
     <startPosition>
       <x>-139.321014</x>
       <z>-472.438416</z>
     </startPosition>
-
     <endPosition>
       <x>-218.897217</x>
       <z>-464.214874</z>
     </endPosition>
-
     <startDirection>
       <x>-0.994702637</x>
       <z>0.102794163</z>
     </startDirection>
-
     <endDirection>
       <x>0.994702637</x>
       <z>-0.102794163</z>
     </endDirection>
-
     <startNode>0</startNode>
     <endNode>1</endNode>
-
   </state>
-
 </Selection>
 ```
 

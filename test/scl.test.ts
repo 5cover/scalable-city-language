@@ -77,7 +77,7 @@ await test('line road exports a valid simple network', () => {
         maxSegmentLength: 200,
         road: {
             prefabName: 'Gravel Road',
-            flags: 'Created End Moveable OnGround OneWayOut OneWayIn',
+            flags: ['Created', 'End', 'Moveable', 'OnGround', 'OneWayOut', 'OneWayIn'],
         },
     });
 
@@ -236,7 +236,7 @@ await test('smith st spiral composition compiles into a connected network', () =
         maxSegmentLength: 96,
         road: {
             prefabName: 'Gravel Road',
-            flags: 'Created End Moveable OnGround OneWayOut OneWayIn',
+            flags: ['Created', 'End', 'Moveable', 'OnGround', 'OneWayOut', 'OneWayIn'],
         },
     });
 
