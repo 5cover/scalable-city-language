@@ -1,8 +1,8 @@
 import { createCurve } from '../geometry/curves.js';
 import { intersectCurves } from '../geometry/intersections.js';
-import { PARAMETER_EPSILON } from '../utils/constants.js';
+import { NODE_MERGE_EPSILON, PARAMETER_EPSILON } from '../utils/constants.js';
 import { invariant } from '../utils/assert.js';
-import { negate2, positionKey } from '../utils/math.js';
+import { negate2 } from '../utils/math.js';
 import type {
   BuildResult,
   BuildSettings,
@@ -26,7 +26,10 @@ interface CurveState {
   readonly splitParameters: number[];
 }
 
-const uniqueSortedParameters = (parameters: readonly number[], isClosed: boolean): number[] => {
+const uniqueSortedParameters = (
+  parameters: readonly number[],
+  isClosed: boolean
+): number[] => {
   const normalized = parameters
     .map((value) => {
       if (!isClosed) {
@@ -41,7 +44,10 @@ const uniqueSortedParameters = (parameters: readonly number[], isClosed: boolean
   const deduped: number[] = [];
   for (const value of normalized) {
     const previous = deduped[deduped.length - 1];
-    if (previous === undefined || Math.abs(previous - value) > PARAMETER_EPSILON) {
+    if (
+      previous === undefined ||
+      Math.abs(previous - value) > PARAMETER_EPSILON
+    ) {
       deduped.push(value);
     }
   }
@@ -74,7 +80,11 @@ const averageCenter = (nodes: readonly NetworkNode[]): Point3 | undefined => {
 
   return total.y === undefined
     ? { x: total.x / nodes.length, z: total.z / nodes.length }
-    : { x: total.x / nodes.length, y: total.y / nodes.length, z: total.z / nodes.length };
+    : {
+        x: total.x / nodes.length,
+        y: total.y / nodes.length,
+        z: total.z / nodes.length
+      };
 };
 
 const buildNetwork = (settings: BuildSettings): BuildResult => {
@@ -88,7 +98,11 @@ const buildNetwork = (settings: BuildSettings): BuildResult => {
   });
 
   for (let leftIndex = 0; leftIndex < curveStates.length; leftIndex += 1) {
-    for (let rightIndex = leftIndex + 1; rightIndex < curveStates.length; rightIndex += 1) {
+    for (
+      let rightIndex = leftIndex + 1;
+      rightIndex < curveStates.length;
+      rightIndex += 1
+    ) {
       const left = curveStates[leftIndex];
       const right = curveStates[rightIndex];
       if (left === undefined || right === undefined) {
@@ -106,11 +120,32 @@ const buildNetwork = (settings: BuildSettings): BuildResult => {
   const nodeMap = new Map<string, NodeAccumulator>();
   const segments: NetworkSegment[] = [];
 
-  const getOrCreateNode = (position: Point3, style: ResolvedRoadStyle): NodeAccumulator => {
-    const key = positionKey(position);
-    const existing = nodeMap.get(key);
-    if (existing !== undefined) {
-      return existing;
+  const samePosition = (left: Point3, right: Point3): boolean => {
+    if (
+      Math.abs(left.x - right.x) > NODE_MERGE_EPSILON ||
+      Math.abs(left.z - right.z) > NODE_MERGE_EPSILON
+    ) {
+      return false;
+    }
+
+    if (left.y === undefined && right.y === undefined) {
+      return true;
+    }
+    if (left.y === undefined || right.y === undefined) {
+      return false;
+    }
+
+    return Math.abs(left.y - right.y) <= NODE_MERGE_EPSILON;
+  };
+
+  const getOrCreateNode = (
+    position: Point3,
+    style: ResolvedRoadStyle
+  ): NodeAccumulator => {
+    for (const existing of nodeMap.values()) {
+      if (samePosition(existing.position, position)) {
+        return existing;
+      }
     }
 
     const created: NodeAccumulator = {
@@ -119,7 +154,7 @@ const buildNetwork = (settings: BuildSettings): BuildResult => {
       style,
       segmentKeys: []
     };
-    nodeMap.set(key, created);
+    nodeMap.set(created.key, created);
     return created;
   };
 
@@ -163,21 +198,31 @@ const buildNetwork = (settings: BuildSettings): BuildResult => {
   };
 
   for (const state of curveStates) {
-    const splitParameters = uniqueSortedParameters(state.splitParameters, state.curve.isClosed);
-    const maxSegmentLength = state.shape.maxSegmentLength ?? settings.maxSegmentLength;
-    invariant(maxSegmentLength > 0, `Shape ${state.shape.id} must have a positive maxSegmentLength.`);
+    const splitParameters = uniqueSortedParameters(
+      state.splitParameters,
+      state.curve.isClosed
+    );
+    const maxSegmentLength =
+      state.shape.maxSegmentLength ?? settings.maxSegmentLength;
+    invariant(
+      maxSegmentLength > 0,
+      `Shape ${state.shape.id} must have a positive maxSegmentLength.`
+    );
 
     if (state.curve.isClosed) {
       const intervals =
         splitParameters.length === 1
           ? [[0, 1]]
           : splitParameters.flatMap<[number, number]>((start, index) => {
-              const next = splitParameters[(index + 1) % splitParameters.length];
+              const next =
+                splitParameters[(index + 1) % splitParameters.length];
               if (next === undefined) {
                 return [];
               }
 
-              return [[start, index === splitParameters.length - 1 ? next + 1 : next]];
+              return [
+                [start, index === splitParameters.length - 1 ? next + 1 : next]
+              ];
             });
 
       for (const [startParam, endParam] of intervals) {
@@ -187,11 +232,16 @@ const buildNetwork = (settings: BuildSettings): BuildResult => {
         const startLength = state.curve.totalLength * startParam;
         const endLength = state.curve.totalLength * endParam;
         const intervalLength = endLength - startLength;
-        const pieceCount = Math.max(1, Math.ceil(intervalLength / maxSegmentLength));
+        const pieceCount = Math.max(
+          1,
+          Math.ceil(intervalLength / maxSegmentLength)
+        );
 
         for (let pieceIndex = 0; pieceIndex < pieceCount; pieceIndex += 1) {
-          const pieceStartLength = startLength + (intervalLength * pieceIndex) / pieceCount;
-          const pieceEndLength = startLength + (intervalLength * (pieceIndex + 1)) / pieceCount;
+          const pieceStartLength =
+            startLength + (intervalLength * pieceIndex) / pieceCount;
+          const pieceEndLength =
+            startLength + (intervalLength * (pieceIndex + 1)) / pieceCount;
           appendSegment(
             state.shape,
             state.curve,
@@ -215,11 +265,16 @@ const buildNetwork = (settings: BuildSettings): BuildResult => {
       const startLength = state.curve.lengthAt(startT);
       const endLength = state.curve.lengthAt(endT);
       const intervalLength = endLength - startLength;
-      const pieceCount = Math.max(1, Math.ceil(intervalLength / maxSegmentLength));
+      const pieceCount = Math.max(
+        1,
+        Math.ceil(intervalLength / maxSegmentLength)
+      );
 
       for (let pieceIndex = 0; pieceIndex < pieceCount; pieceIndex += 1) {
-        const pieceStartLength = startLength + (intervalLength * pieceIndex) / pieceCount;
-        const pieceEndLength = startLength + (intervalLength * (pieceIndex + 1)) / pieceCount;
+        const pieceStartLength =
+          startLength + (intervalLength * pieceIndex) / pieceCount;
+        const pieceEndLength =
+          startLength + (intervalLength * (pieceIndex + 1)) / pieceCount;
         appendSegment(
           state.shape,
           state.curve,
@@ -233,7 +288,8 @@ const buildNetwork = (settings: BuildSettings): BuildResult => {
   }
 
   const nodes: NetworkNode[] = Array.from(nodeMap.values()).map((node) => {
-    const flags = node.segmentKeys.length > 1 ? node.style.junctionFlags : node.style.flags;
+    const flags =
+      node.segmentKeys.length > 1 ? node.style.junctionFlags : node.style.flags;
 
     return {
       key: node.key,

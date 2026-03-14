@@ -1,4 +1,7 @@
-import { DEFAULT_JUNCTION_FLAGS, DEFAULT_MAX_SEGMENT_LENGTH } from '../utils/constants.js';
+import {
+  DEFAULT_JUNCTION_FLAGS,
+  DEFAULT_MAX_SEGMENT_LENGTH
+} from '../utils/constants.js';
 import { buildNetwork } from '../domain/build.js';
 import { polarPoint } from '../utils/geometry.js';
 import type {
@@ -27,11 +30,16 @@ const resolveRoadStyle = (
   defaults: CanvasOptions['defaultRoad'] | undefined,
   overrides: CircleRoadInput['road'] | undefined
 ): ResolvedRoadStyle => {
-  const prefabName = overrides?.prefabName ?? defaults?.prefabName ?? 'Gravel Road';
+  const prefabName =
+    overrides?.prefabName ?? defaults?.prefabName ?? 'Gravel Road';
   const flags =
-    overrides?.flags ?? defaults?.flags ?? 'Created End Moveable OnGround OneWayOut OneWayIn';
+    overrides?.flags ??
+    defaults?.flags ??
+    'Created End Moveable OnGround OneWayOut OneWayIn';
   const junctionFlags =
-    overrides?.junctionFlags ?? defaults?.junctionFlags ?? DEFAULT_JUNCTION_FLAGS;
+    overrides?.junctionFlags ??
+    defaults?.junctionFlags ??
+    DEFAULT_JUNCTION_FLAGS;
 
   return {
     prefabName,
@@ -64,11 +72,15 @@ const createCanvas = (options: CanvasOptions = {}): Canvas => {
     return id;
   };
 
-  const withOptionalMaxSegmentLength = <TShape extends { readonly maxSegmentLength?: number }>(
+  const withOptionalMaxSegmentLength = <
+    TShape extends { readonly maxSegmentLength?: number }
+  >(
     shape: TShape,
     maxSegmentLength: number | undefined
   ): TShape => {
-    return maxSegmentLength === undefined ? shape : { ...shape, maxSegmentLength };
+    return maxSegmentLength === undefined
+      ? shape
+      : { ...shape, maxSegmentLength };
   };
 
   return {
@@ -76,9 +88,9 @@ const createCanvas = (options: CanvasOptions = {}): Canvas => {
       return addShape(
         withOptionalMaxSegmentLength<Omit<LineRoadShape, 'id' | 'road'>>(
           {
-          kind: 'line',
-          start: input.start,
-          end: input.end
+            kind: 'line',
+            start: input.start,
+            end: input.end
           },
           input.maxSegmentLength
         ),
@@ -89,9 +101,14 @@ const createCanvas = (options: CanvasOptions = {}): Canvas => {
       return addShape(
         withOptionalMaxSegmentLength<Omit<LineRoadShape, 'id' | 'road'>>(
           {
-          kind: 'line',
-          start: input.start,
-          end: polarPoint(input.start, input.length, input.angleDeg, input.endY)
+            kind: 'line',
+            start: input.start,
+            end: polarPoint(
+              input.start,
+              input.length,
+              input.angleDeg,
+              input.endY
+            )
           },
           input.maxSegmentLength
         ),
@@ -102,9 +119,9 @@ const createCanvas = (options: CanvasOptions = {}): Canvas => {
       return addShape(
         withOptionalMaxSegmentLength<Omit<CircleRoadShape, 'id' | 'road'>>(
           {
-          kind: 'circle',
-          center: input.center,
-          radius: input.radius
+            kind: 'circle',
+            center: input.center,
+            radius: input.radius
           },
           input.maxSegmentLength
         ),
@@ -115,13 +132,13 @@ const createCanvas = (options: CanvasOptions = {}): Canvas => {
       return addShape(
         withOptionalMaxSegmentLength<Omit<SpiralRoadShape, 'id' | 'road'>>(
           {
-          kind: 'spiral',
-          center: input.center,
-          startRadius: input.startRadius,
-          pitch: input.pitch,
-          direction: input.direction ?? 'counterclockwise',
-          startAngleDeg: input.startAngleDeg ?? 0,
-          arcLength: input.arcLength
+            kind: 'spiral',
+            center: input.center,
+            startRadius: input.startRadius,
+            pitch: input.pitch,
+            direction: input.direction ?? 'counterclockwise',
+            startAngleDeg: input.startAngleDeg ?? 0,
+            arcLength: input.arcLength
           },
           input.maxSegmentLength
         ),

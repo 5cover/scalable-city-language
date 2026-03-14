@@ -1,7 +1,17 @@
 import type { Point2, Point3, RoadShape } from '../domain/types.js';
-import { MAX_ROOT_ITERATIONS, PARAMETER_EPSILON, POSITION_EPSILON } from '../utils/constants.js';
+import {
+  MAX_ROOT_ITERATIONS,
+  PARAMETER_EPSILON,
+  POSITION_EPSILON
+} from '../utils/constants.js';
 import { invariant } from '../utils/assert.js';
-import { clamp, lerpOptional, normalize2, point2, point3 } from '../utils/math.js';
+import {
+  clamp,
+  lerpOptional,
+  normalize2,
+  point2,
+  point3
+} from '../utils/math.js';
 import { degreesToRadians } from '../utils/geometry.js';
 
 interface CurveAdapter {
@@ -14,19 +24,30 @@ interface CurveAdapter {
   parameterAtLength(length: number): number;
 }
 
-const spiralArcLengthPrimitive = (startRadius: number, radialStep: number, theta: number): number => {
+const spiralArcLengthPrimitive = (
+  startRadius: number,
+  radialStep: number,
+  theta: number
+): number => {
   const u = startRadius + radialStep * theta;
   const root = Math.hypot(u, radialStep);
 
-  return (u * root + radialStep * radialStep * Math.log(u + root)) / (2 * radialStep);
+  return (
+    (u * root + radialStep * radialStep * Math.log(u + root)) / (2 * radialStep)
+  );
 };
 
-const createLineCurve = (shape: Extract<RoadShape, { kind: 'line' }>): CurveAdapter => {
+const createLineCurve = (
+  shape: Extract<RoadShape, { kind: 'line' }>
+): CurveAdapter => {
   const deltaX = shape.end.x - shape.start.x;
   const deltaZ = shape.end.z - shape.start.z;
   const totalLength = Math.hypot(deltaX, deltaZ);
 
-  invariant(totalLength > POSITION_EPSILON, `Line road ${shape.id} must have non-zero length.`);
+  invariant(
+    totalLength > POSITION_EPSILON,
+    `Line road ${shape.id} must have non-zero length.`
+  );
 
   return {
     shape,
@@ -59,8 +80,13 @@ const createLineCurve = (shape: Extract<RoadShape, { kind: 'line' }>): CurveAdap
   };
 };
 
-const createCircleCurve = (shape: Extract<RoadShape, { kind: 'circle' }>): CurveAdapter => {
-  invariant(shape.radius > POSITION_EPSILON, `Circle road ${shape.id} must have a positive radius.`);
+const createCircleCurve = (
+  shape: Extract<RoadShape, { kind: 'circle' }>
+): CurveAdapter => {
+  invariant(
+    shape.radius > POSITION_EPSILON,
+    `Circle road ${shape.id} must have a positive radius.`
+  );
 
   const totalLength = 2 * Math.PI * shape.radius;
 
@@ -88,15 +114,26 @@ const createCircleCurve = (shape: Extract<RoadShape, { kind: 'circle' }>): Curve
       return wrapped * totalLength;
     },
     parameterAtLength(length): number {
-      return ((length / totalLength) % 1 + 1) % 1;
+      return (((length / totalLength) % 1) + 1) % 1;
     }
   };
 };
 
-const createSpiralCurve = (shape: Extract<RoadShape, { kind: 'spiral' }>): CurveAdapter => {
-  invariant(shape.startRadius >= 0, `Spiral road ${shape.id} must have a non-negative start radius.`);
-  invariant(shape.pitch > POSITION_EPSILON, `Spiral road ${shape.id} must have a positive pitch.`);
-  invariant(shape.arcLength > POSITION_EPSILON, `Spiral road ${shape.id} must have a positive arc length.`);
+const createSpiralCurve = (
+  shape: Extract<RoadShape, { kind: 'spiral' }>
+): CurveAdapter => {
+  invariant(
+    shape.startRadius >= 0,
+    `Spiral road ${shape.id} must have a non-negative start radius.`
+  );
+  invariant(
+    shape.pitch > POSITION_EPSILON,
+    `Spiral road ${shape.id} must have a positive pitch.`
+  );
+  invariant(
+    shape.arcLength > POSITION_EPSILON,
+    `Spiral road ${shape.id} must have a positive arc length.`
+  );
 
   const startAngle = degreesToRadians(shape.startAngleDeg);
   const directionSign = shape.direction === 'clockwise' ? -1 : 1;
@@ -105,7 +142,10 @@ const createSpiralCurve = (shape: Extract<RoadShape, { kind: 'spiral' }>): Curve
 
   const solveThetaForLength = (targetLength: number): number => {
     let low = 0;
-    let high = Math.max(targetLength / Math.max(shape.startRadius, radialStep), 1);
+    let high = Math.max(
+      targetLength / Math.max(shape.startRadius, radialStep),
+      1
+    );
 
     while (
       spiralArcLengthPrimitive(shape.startRadius, radialStep, high) - startArc <
@@ -116,7 +156,8 @@ const createSpiralCurve = (shape: Extract<RoadShape, { kind: 'spiral' }>): Curve
 
     for (let iteration = 0; iteration < MAX_ROOT_ITERATIONS; iteration += 1) {
       const mid = (low + high) / 2;
-      const length = spiralArcLengthPrimitive(shape.startRadius, radialStep, mid) - startArc;
+      const length =
+        spiralArcLengthPrimitive(shape.startRadius, radialStep, mid) - startArc;
 
       if (Math.abs(length - targetLength) <= POSITION_EPSILON) {
         return mid;
@@ -134,7 +175,9 @@ const createSpiralCurve = (shape: Extract<RoadShape, { kind: 'spiral' }>): Curve
 
   const totalTheta = solveThetaForLength(shape.arcLength);
 
-  const pointAndDerivativeAt = (t: number): { point: Point3; derivative: Point2 } => {
+  const pointAndDerivativeAt = (
+    t: number
+  ): { point: Point3; derivative: Point2 } => {
     const clamped = clamp(t, 0, 1);
     const thetaTravel = totalTheta * clamped;
     const radius = shape.startRadius + radialStep * thetaTravel;
@@ -166,7 +209,11 @@ const createSpiralCurve = (shape: Extract<RoadShape, { kind: 'spiral' }>): Curve
       return normalize2(pointAndDerivativeAt(t).derivative);
     },
     lengthAt(t): number {
-      return shape.arcLength * clamp(t, 0, 1);
+      const theta = totalTheta * clamp(t, 0, 1);
+      return (
+        spiralArcLengthPrimitive(shape.startRadius, radialStep, theta) -
+        startArc
+      );
     },
     parameterAtLength(length): number {
       const clampedLength = clamp(length, 0, shape.arcLength);

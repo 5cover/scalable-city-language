@@ -21,7 +21,12 @@ const formatNumber = (value: number): string => {
   return value.toFixed(6).replace(/(?:\.0+|(\.\d+?)0+)$/, '$1');
 };
 
-const appendPoint = (lines: string[], tagName: string, point: Point2 | Point3, indent: string): void => {
+const appendPoint = (
+  lines: string[],
+  tagName: string,
+  point: Point2 | Point3,
+  indent: string
+): void => {
   lines.push(`${indent}<${tagName}>`);
   lines.push(`${indent}  <x>${formatNumber(point.x)}</x>`);
   if ('y' in point && point.y !== undefined) {
@@ -33,7 +38,10 @@ const appendPoint = (lines: string[], tagName: string, point: Point2 | Point3, i
 
 const shortId = (fullId: number): number => fullId & 0xffff;
 
-const compileToMoveIt = (network: BuildResult, options: CompileToMoveItOptions = {}): string => {
+const compileToMoveIt = (
+  network: BuildResult,
+  options: CompileToMoveItOptions = {}
+): string => {
   const nodeIds = new Map<string, number>();
   const segmentIds = new Map<string, number>();
 
@@ -58,11 +66,16 @@ const compileToMoveIt = (network: BuildResult, options: CompileToMoveItOptions =
     }
   }
 
-  const lines = ['<?xml version="1.0" encoding="utf-8"?>', '<Selection xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'];
+  const lines = [
+    '<?xml version="1.0" encoding="utf-8"?>',
+    '<Selection xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
+  ];
   if (network.center !== undefined) {
     appendPoint(lines, 'center', network.center, '  ');
   }
-  lines.push(`  <version>${escapeXml(options.version ?? DEFAULT_MOVE_IT_VERSION)}</version>`);
+  lines.push(
+    `  <version>${escapeXml(options.version ?? DEFAULT_MOVE_IT_VERSION)}</version>`
+  );
 
   for (const node of network.nodes) {
     const nodeId = nodeIds.get(node.key);
@@ -87,7 +100,11 @@ const compileToMoveIt = (network: BuildResult, options: CompileToMoveItOptions =
     const segmentId = segmentIds.get(segment.key);
     const startNodeId = nodeIds.get(segment.startNodeKey);
     const endNodeId = nodeIds.get(segment.endNodeKey);
-    if (segmentId === undefined || startNodeId === undefined || endNodeId === undefined) {
+    if (
+      segmentId === undefined ||
+      startNodeId === undefined ||
+      endNodeId === undefined
+    ) {
       continue;
     }
 

@@ -9,7 +9,15 @@ import {
   POSITION_EPSILON
 } from '../utils/constants.js';
 import { invariant } from '../utils/assert.js';
-import { clamp, cross2, distance2, dot2, nearlyEqual, point2, subtract2 } from '../utils/math.js';
+import {
+  clamp,
+  cross2,
+  distance2,
+  dot2,
+  nearlyEqual,
+  point2,
+  subtract2
+} from '../utils/math.js';
 
 interface CurveIntersection {
   readonly leftShapeId: ShapeId;
@@ -33,7 +41,9 @@ const dedupeIntersections = (
   for (const intersection of intersections) {
     const candidate = {
       ...intersection,
-      leftT: leftClosed ? normalizeClosedParameter(intersection.leftT) : clamp(intersection.leftT, 0, 1),
+      leftT: leftClosed
+        ? normalizeClosedParameter(intersection.leftT)
+        : clamp(intersection.leftT, 0, 1),
       rightT: rightClosed
         ? normalizeClosedParameter(intersection.rightT)
         : clamp(intersection.rightT, 0, 1)
@@ -67,13 +77,22 @@ const createIntersection = (
   };
 };
 
-const intersectLineLine = (left: CurveAdapter, right: CurveAdapter): CurveIntersection[] => {
+const intersectLineLine = (
+  left: CurveAdapter,
+  right: CurveAdapter
+): CurveIntersection[] => {
   const leftShape = left.shape as Extract<RoadShape, { kind: 'line' }>;
   const rightShape = right.shape as Extract<RoadShape, { kind: 'line' }>;
   const p = point2(leftShape.start.x, leftShape.start.z);
   const q = point2(rightShape.start.x, rightShape.start.z);
-  const r = point2(leftShape.end.x - leftShape.start.x, leftShape.end.z - leftShape.start.z);
-  const s = point2(rightShape.end.x - rightShape.start.x, rightShape.end.z - rightShape.start.z);
+  const r = point2(
+    leftShape.end.x - leftShape.start.x,
+    leftShape.end.z - leftShape.start.z
+  );
+  const s = point2(
+    rightShape.end.x - rightShape.start.x,
+    rightShape.end.z - rightShape.start.z
+  );
   const rxs = cross2(r, s);
   const qMinusP = subtract2(q, p);
   const qpxr = cross2(qMinusP, r);
@@ -112,10 +131,18 @@ const intersectLineLine = (left: CurveAdapter, right: CurveAdapter): CurveInters
   return [createIntersection(left, right, clamp(t, 0, 1), clamp(u, 0, 1))];
 };
 
-const intersectLineCircle = (left: CurveAdapter, right: CurveAdapter): CurveIntersection[] => {
-  const line = left.shape.kind === 'line' ? left.shape : (right.shape as Extract<RoadShape, { kind: 'line' }>);
+const intersectLineCircle = (
+  left: CurveAdapter,
+  right: CurveAdapter
+): CurveIntersection[] => {
+  const line =
+    left.shape.kind === 'line'
+      ? left.shape
+      : (right.shape as Extract<RoadShape, { kind: 'line' }>);
   const circle =
-    left.shape.kind === 'circle' ? left.shape : (right.shape as Extract<RoadShape, { kind: 'circle' }>);
+    left.shape.kind === 'circle'
+      ? left.shape
+      : (right.shape as Extract<RoadShape, { kind: 'circle' }>);
   const lineIsLeft = left.shape.kind === 'line';
   const start = point2(line.start.x, line.start.z);
   const end = point2(line.end.x, line.end.z);
@@ -141,11 +168,18 @@ const intersectLineCircle = (left: CurveAdapter, right: CurveAdapter): CurveInte
 
   return dedupeIntersections(
     roots
-      .filter((value) => value >= -PARAMETER_EPSILON && value <= 1 + PARAMETER_EPSILON)
+      .filter(
+        (value) => value >= -PARAMETER_EPSILON && value <= 1 + PARAMETER_EPSILON
+      )
       .map((lineT) => {
         const clamped = clamp(lineT, 0, 1);
-        const point = lineIsLeft ? left.pointAt(clamped) : right.pointAt(clamped);
-        const angle = Math.atan2(point.z - circle.center.z, point.x - circle.center.x);
+        const point = lineIsLeft
+          ? left.pointAt(clamped)
+          : right.pointAt(clamped);
+        const angle = Math.atan2(
+          point.z - circle.center.z,
+          point.x - circle.center.x
+        );
         const circleT = normalizeClosedParameter(angle / (Math.PI * 2));
 
         return lineIsLeft
@@ -157,7 +191,10 @@ const intersectLineCircle = (left: CurveAdapter, right: CurveAdapter): CurveInte
   );
 };
 
-const intersectCircleCircle = (left: CurveAdapter, right: CurveAdapter): CurveIntersection[] => {
+const intersectCircleCircle = (
+  left: CurveAdapter,
+  right: CurveAdapter
+): CurveIntersection[] => {
   const a = left.shape as Extract<RoadShape, { kind: 'circle' }>;
   const b = right.shape as Extract<RoadShape, { kind: 'circle' }>;
   const centerA = point2(a.center.x, a.center.z);
@@ -179,18 +216,32 @@ const intersectCircleCircle = (left: CurveAdapter, right: CurveAdapter): CurveIn
     return [];
   }
 
-  const baseDistance = (a.radius * a.radius - b.radius * b.radius + distance * distance) / (2 * distance);
+  const baseDistance =
+    (a.radius * a.radius - b.radius * b.radius + distance * distance) /
+    (2 * distance);
   const heightSquared = a.radius * a.radius - baseDistance * baseDistance;
   const height = Math.sqrt(Math.max(heightSquared, 0));
-  const axis = point2((centerB.x - centerA.x) / distance, (centerB.z - centerA.z) / distance);
+  const axis = point2(
+    (centerB.x - centerA.x) / distance,
+    (centerB.z - centerA.z) / distance
+  );
   const perpendicular = point2(-axis.z, axis.x);
-  const basePoint = point2(centerA.x + axis.x * baseDistance, centerA.z + axis.z * baseDistance);
+  const basePoint = point2(
+    centerA.x + axis.x * baseDistance,
+    centerA.z + axis.z * baseDistance
+  );
   const points =
     height <= POSITION_EPSILON
       ? [basePoint]
       : [
-          point2(basePoint.x + perpendicular.x * height, basePoint.z + perpendicular.z * height),
-          point2(basePoint.x - perpendicular.x * height, basePoint.z - perpendicular.z * height)
+          point2(
+            basePoint.x + perpendicular.x * height,
+            basePoint.z + perpendicular.z * height
+          ),
+          point2(
+            basePoint.x - perpendicular.x * height,
+            basePoint.z - perpendicular.z * height
+          )
         ];
 
   return dedupeIntersections(
@@ -218,7 +269,11 @@ const sampleCountForCurve = (curve: CurveAdapter): number => {
   );
 };
 
-const bisectRoot = (fn: (value: number) => number, start: number, end: number): number => {
+const bisectRoot = (
+  fn: (value: number) => number,
+  start: number,
+  end: number
+): number => {
   let low = start;
   let high = end;
   let lowValue = fn(low);
@@ -241,7 +296,10 @@ const bisectRoot = (fn: (value: number) => number, start: number, end: number): 
   return (low + high) / 2;
 };
 
-const scanRoots = (fn: (value: number) => number, sampleCount: number): number[] => {
+const scanRoots = (
+  fn: (value: number) => number,
+  sampleCount: number
+): number[] => {
   const roots: number[] = [];
   let previousT = 0;
   let previousValue = fn(0);
@@ -265,29 +323,40 @@ const scanRoots = (fn: (value: number) => number, sampleCount: number): number[]
   return roots;
 };
 
-const intersectLineSpiral = (left: CurveAdapter, right: CurveAdapter): CurveIntersection[] => {
-  const line = left.shape.kind === 'line' ? left.shape : (right.shape as Extract<RoadShape, { kind: 'line' }>);
+const intersectLineSpiral = (
+  left: CurveAdapter,
+  right: CurveAdapter
+): CurveIntersection[] => {
+  const line =
+    left.shape.kind === 'line'
+      ? left.shape
+      : (right.shape as Extract<RoadShape, { kind: 'line' }>);
   const spiral = left.shape.kind === 'spiral' ? left : right;
   const lineIsLeft = left.shape.kind === 'line';
   const start = point2(line.start.x, line.start.z);
-  const direction = point2(line.end.x - line.start.x, line.end.z - line.start.z);
-  const directionLengthSquared = dot2(direction, direction);
-  const roots = scanRoots(
-    (t) => {
-      const point = spiral.pointAt(t);
-      return cross2(subtract2(point2(point.x, point.z), start), direction);
-    },
-    sampleCountForCurve(spiral)
+  const direction = point2(
+    line.end.x - line.start.x,
+    line.end.z - line.start.z
   );
+  const directionLengthSquared = dot2(direction, direction);
+  const roots = scanRoots((t) => {
+    const point = spiral.pointAt(t);
+    return cross2(subtract2(point2(point.x, point.z), start), direction);
+  }, sampleCountForCurve(spiral));
 
   return dedupeIntersections(
     roots
       .map((spiralT) => {
         const point = spiral.pointAt(spiralT);
-        const lineT = dot2(subtract2(point2(point.x, point.z), start), direction) / directionLengthSquared;
+        const lineT =
+          dot2(subtract2(point2(point.x, point.z), start), direction) /
+          directionLengthSquared;
         return { lineT, spiralT };
       })
-      .filter(({ lineT }) => lineT >= -PARAMETER_EPSILON && lineT <= 1 + PARAMETER_EPSILON)
+      .filter(
+        ({ lineT }) =>
+          lineT >= -PARAMETER_EPSILON && lineT <= 1 + PARAMETER_EPSILON
+      )
       .map(({ lineT, spiralT }) =>
         lineIsLeft
           ? createIntersection(left, right, clamp(lineT, 0, 1), spiralT)
@@ -298,24 +367,28 @@ const intersectLineSpiral = (left: CurveAdapter, right: CurveAdapter): CurveInte
   );
 };
 
-const intersectCircleSpiral = (left: CurveAdapter, right: CurveAdapter): CurveIntersection[] => {
-  const circle = left.shape.kind === 'circle' ? left.shape : (right.shape as Extract<RoadShape, { kind: 'circle' }>);
+const intersectCircleSpiral = (
+  left: CurveAdapter,
+  right: CurveAdapter
+): CurveIntersection[] => {
+  const circle =
+    left.shape.kind === 'circle'
+      ? left.shape
+      : (right.shape as Extract<RoadShape, { kind: 'circle' }>);
   const spiral = left.shape.kind === 'spiral' ? left : right;
   const circleIsLeft = left.shape.kind === 'circle';
   const center = point2(circle.center.x, circle.center.z);
-  const roots = scanRoots(
-    (t) => {
-      const point = spiral.pointAt(t);
-      return distance2(point2(point.x, point.z), center) - circle.radius;
-    },
-    sampleCountForCurve(spiral)
-  );
+  const roots = scanRoots((t) => {
+    const point = spiral.pointAt(t);
+    return distance2(point2(point.x, point.z), center) - circle.radius;
+  }, sampleCountForCurve(spiral));
 
   return dedupeIntersections(
     roots.map((spiralT) => {
       const point = spiral.pointAt(spiralT);
       const circleT = normalizeClosedParameter(
-        Math.atan2(point.z - circle.center.z, point.x - circle.center.x) / (Math.PI * 2)
+        Math.atan2(point.z - circle.center.z, point.x - circle.center.x) /
+          (Math.PI * 2)
       );
 
       return circleIsLeft
@@ -327,7 +400,10 @@ const intersectCircleSpiral = (left: CurveAdapter, right: CurveAdapter): CurveIn
   );
 };
 
-const intersectCurves = (left: CurveAdapter, right: CurveAdapter): CurveIntersection[] => {
+const intersectCurves = (
+  left: CurveAdapter,
+  right: CurveAdapter
+): CurveIntersection[] => {
   if (left.shape.kind === 'line' && right.shape.kind === 'line') {
     return intersectLineLine(left, right);
   }
