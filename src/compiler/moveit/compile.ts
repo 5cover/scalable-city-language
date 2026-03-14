@@ -2,7 +2,11 @@ import type { BuildResult, Point2, Point3 } from '../../domain/types.js';
 import { DEFAULT_MOVE_IT_VERSION } from '../../utils/constants.js';
 import { normalize2, point2, subtract2 } from '../../utils/math.js';
 
+/**
+ * Options for Move It XML compilation.
+ */
 export interface CompileToMoveItOptions {
+    /** Optional Move It version string written to `<version>`. */
     readonly version?: string;
 }
 
@@ -45,6 +49,13 @@ const segmentDirections = (start: Point3, control: Point3, end: Point3): { start
     };
 };
 
+/**
+ * Compile resolved SCL network IR into Move It selection XML.
+ *
+ * Segment `<position>` is emitted from `NetworkSegment.control`, and the start
+ * and end directions are derived from that control point as Cities: Skylines
+ * Hermite directions.
+ */
 export const compileToMoveIt = (network: BuildResult, options: CompileToMoveItOptions = {}): string => {
     const nodeIds = new Map<string, number>();
     const segmentIds = new Map<string, number>();

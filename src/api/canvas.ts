@@ -41,6 +41,12 @@ const apiDefaults: CanvasOptions = {
     },
 };
 
+/**
+ * Create a new SCL authoring canvas.
+ *
+ * The canvas stores declarative figures and resolves them into network IR only
+ * when `build()` is called.
+ */
 export const createCanvas = (options?: DeepPartial<CanvasOptions>): Canvas => {
     const figures: Figure[] = [];
     const nextFigId = createFigIdFactory();
