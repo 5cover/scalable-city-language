@@ -67,10 +67,10 @@ Represents a network node or intersection.
 
 ```ts
 interface Node {
-  id: number
-  position: Vec2
-  prefab: string
-  flags: NodeFlags
+  id: number;
+  position: Vec2;
+  prefab: string;
+  flags: NodeFlags;
 }
 ```
 
@@ -89,13 +89,13 @@ Represents a road between two nodes.
 
 ```ts
 interface Segment {
-  id: number
-  startNode: Node
-  endNode: Node
-  startDirection: Vec2
-  endDirection: Vec2
-  midpoint: Vec2
-  prefab: string
+  id: number;
+  startNode: Node;
+  endNode: Node;
+  startDirection: Vec2;
+  endDirection: Vec2;
+  midpoint: Vec2;
+  prefab: string;
 }
 ```
 
