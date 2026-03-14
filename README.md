@@ -1,259 +1,130 @@
 # Scalable City Language
 
-SCL (Scalable City Language) is a geometry toolkit for Cities: Skylines that enables algorithmic generation of city infrastructure.
+SCL is a TypeScript library for describing Cities: Skylines road layouts as shapes instead of manually authored nodes.
 
-Instead of manually placing roads and objects with the mouse, SCL allows layouts to be defined using code, math, and parametric geometry, then compiled into formats the game can import.
+You add line roads, rays, circles, and Archimedean spirals to a canvas. SCL resolves intersections, creates nodes, splits long geometry into valid segments, and compiles the result to Move It selection XML.
 
-The first target is Move It selection XML, allowing generated infrastructure to be pasted directly into a city.
+## Current Scope
 
-SCL is conceptually similar to how SVG describes vector graphics or how OpenSCAD describes CAD geometry.
+This repository currently implements:
 
-## Motivation
+- a strict TypeScript library package
+- shape authoring through a small canvas API
+- line, ray, circle, and Archimedean spiral roads
+- automatic intersection detection for line/line, line/circle, circle/circle, line/spiral, and circle/spiral
+- automatic node derivation from endpoints, intersections, and max-length subdivision
+- Move It XML export in the stripped format documented in [`docs/Format.md`](docs/Format.md)
+- tests with `node:test`
 
-Building precise infrastructure in Cities: Skylines can be difficult even with advanced mods. Tasks such as:
+This repository does not currently include:
 
-- perfect spirals
-- smooth highway ramps
-- mathematically correct curves
-- large parametric layouts
-- reproducible infrastructure
+- a CLI
+- a browser playground
+- a DSL
 
-are hard to achieve with interactive tools.
-
-SCL provides a way to define these layouts algorithmically.
-
-Instead of: move mouse &rarr; place road &rarr; adjust &rarr; retry
-
-SCL allows: define geometry &rarr; generate layout &rarr; paste into game
-
-Complete flow:
-
-```mermaid
-flowchart LR
-a@{ shape: sm-circ, label: "Small start" } -->|API calls| n1["Geometry Generators"] -->|IR objects| Compiler -->|Move It XML| n3["Cities: Skylines"] -->|In-game placement| z@{ shape: framed-circle, label: "Stop" }
-```
-
-This enables:
-
-- exact coordinates
-- exact angles
-- parametric infrastructure
-- reproducible layouts
-- version control of city geometry
-
-## Philosophy
-
-SCL is neither a game mod or a full programming language.
-
-It is a geometry library and compilation pipeline.
-
-SCL focuses on three responsibilities:
-
-1. Generate infrastructure geometry
-2. Represent it in a simple intermediate model
-3. Compile it to formats the game understands
-
-## Intermediate Representation
-
-The core IR mirrors the Cities: Skylines network model.
-
-Only two primitives are required: Node and Segment
-
-Everything else is derived from these.
-
-## Node
-
-Represents a network node or intersection.
-
-```ts
-interface Node {
-  id: number;
-  position: Vec2;
-  prefab: string;
-  flags: NodeFlags;
-}
-```
-
-Example:
-
-```text
-Node
-  id: 0x05000001
-  position: (-218.897, -464.214)
-  prefab: "Gravel Road"
-```
-
-## Segment
-
-Represents a road between two nodes.
-
-```ts
-interface Segment {
-  id: number;
-  startNode: Node;
-  endNode: Node;
-  startDirection: Vec2;
-  endDirection: Vec2;
-  midpoint: Vec2;
-  prefab: string;
-}
-```
-
-Segments use the same spline parameters as the game engine.
-
-## Geometry Generators
-
-Generators produce nodes and segments programmatically.
-
-Examples:
-
-```text
-spiral(...)
-arc(...)
-polyline(...)
-grid(...)
-roundabout(...)
-```
-
-Generators return infrastructure geometry in IR form.
-
-Example:
-
-```text
-spiral(
-  center = (0,0),
-  pitch = 82,
-  turns = 40
-)
-```
-
-## Compiler Targets
-
-The first compiler target is Move It selection XML.
-
-The resulting file can be pasted directly into the game using Move It.
-
-Future targets may include:
-
-- direct mod integration
-- Cities Skylines 2 APIs
-- visualization formats
-
-## Move It Format
-
-SCL compiles infrastructure geometry into Move It selections.
-
-Example output:
-
-```xml
-<Selection xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <center>
-    <x>-179.109116</x>
-    <z>-468.32666</z>
-  </center>
-  <state xsi:type="NodeState">
-    ...
-  </state>
-  <state xsi:type="SegmentState">
-    ...
-  </state>
-</Selection>
-```
-
-The Move It format describes:
-
-- nodes
-- segments
-- object relationships
-- spline geometry
-
-SCL handles all required serialization details.
-
-## Example Workflow
-
-Example pipeline:
+## Install
 
 ```sh
-scl generate spiral \
-  --pitch 82 \
-  --turns 40 \
-  > spiral.xml
+pnpm install
 ```
 
-Then in Cities: Skylines:
+## Usage
 
-1. Copy the XML
-2. Paste using Move It
-3. The generated layout appears in-game
+```ts
+import {
+  compileToMoveIt,
+  createCanvas,
+  polarPoint
+} from 'scalable-city-language';
 
-## Visualization
+const canvas = createCanvas({
+  maxSegmentLength: 96,
+  defaultRoad: {
+    prefabName: 'Gravel Road',
+    flags: 'Created End Moveable OnGround OneWayOut OneWayIn'
+  }
+});
 
-Because SCL geometry is deterministic, layouts can be previewed before importing.
+canvas.addCircleRoad({
+  center: { x: 0, z: 0 },
+  radius: 10
+});
 
-Possible visualizations include:
+canvas.addArchimedeanSpiralRoad({
+  center: { x: 0, z: 0 },
+  startRadius: 20,
+  pitch: 82.3,
+  direction: 'clockwise',
+  startAngleDeg: 0,
+  arcLength: 900
+});
 
-- browser canvas
-- SVG rendering
-- WebGL preview
+for (let index = 0; index < 5; index += 1) {
+  const angleDeg = (360 / 5) * index;
+  canvas.addLineRoad({
+    start: { x: 0, z: 0 },
+    end: polarPoint({ x: 0, z: 0 }, 180, angleDeg)
+  });
+}
 
-Future versions may include an interactive browser playground.
-
-## Why "Scalable"
-
-SCL is scalable in two ways.
-
-### Geometry scaling
-
-Layouts can be resized by adjusting parameters.
-
-Example:
-
-```text
-spiral(radius=20)
-spiral(radius=200)
+const network = canvas.build();
+const xml = compileToMoveIt(network);
 ```
 
-Same layout, different scale.
+## API Notes
 
-### Development scaling
+- `createCanvas(options)` creates the authoring surface and stores declarative shapes.
+- `canvas.addLineRoad(...)`, `canvas.addRayRoad(...)`, `canvas.addCircleRoad(...)`, and `canvas.addArchimedeanSpiralRoad(...)` add shapes only. Users never create nodes directly.
+- `canvas.build()` resolves the shape set into a network IR containing nodes, segments, and a computed center.
+- `compileToMoveIt(network)` turns that IR into Move It XML with deterministic node and segment IDs.
+- Coordinates are meters.
+- `x` is east/west, `z` is north/south, and optional `y` is elevation.
+- If `y` is omitted, SCL omits `<y>` in XML so Move It can snap that position to terrain height.
 
-Because infrastructure is defined as text:
+## Running Checks
 
-- version control
-- scripting
-- parametric generation
-- reproducible builds
+```sh
+pnpm run build
+pnpm run lint
+pnpm run test
+```
 
-all become possible.
+## What Is Implemented Now
 
-## Example Use Cases
+- shared curve-based geometry handling for lines, circles, and spirals
+- one segmentation pipeline for intersections and max segment length splitting
+- configurable canvas-level defaults and per-shape overrides for prefab name, flags, and junction flags
+- deterministic Move It XML output using a single root `xmlns:xsi` declaration
 
-SCL enables layouts that are difficult to build manually.
+## Known Limitations
 
-Examples:
+This is a v1 geometry engine. Current limitations are intentional:
 
-- spiral suburbs
-- highway interchanges
-- turbine interchanges
-- smooth ramp transitions
-- parametric roundabouts
-- procedural city layouts
+- overlapping or collinear duplicate geometry is rejected for supported exact cases instead of being merged
+- spiral intersections are found with sampled root scans plus refinement, not a symbolic curve-curve solver
+- spiral/spiral intersections are not implemented yet
+- node prefab and flag resolution at mixed-prefab intersections currently follows the first shape that creates the node
+- circles are exported as segmented network geometry, not native arc primitives
 
-## Roadmap
+## Move It Notes
 
-Planned components:
+Move It XML generation follows [`docs/Format.md`](docs/Format.md) as the source of truth and uses the sample exports in [`docs/sample moveit exports`](docs/sample%20moveit%20exports) for serializer shape checks.
 
-- core geometry library
-- Move It XML compiler
-- command line interface
-- browser playground
-- visualization tools
-- optional in-game mod integration
+The compiler currently emits only the stripped fields needed for road networks:
 
-## Status
+- `Selection`
+- `center`
+- `version`
+- `NodeState`
+- `SegmentState`
 
-SCL is currently experimental.
+## Development
 
-The Move It format has been reverse-engineered sufficiently to allow generation of valid infrastructure layouts.
+The codebase is organized into:
 
-The project is focused on building the first geometry generator and compiler pipeline.
+- `src/api`
+- `src/domain`
+- `src/geometry`
+- `src/compiler/moveit`
+- `src/utils`
+- `test`
