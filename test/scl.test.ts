@@ -83,6 +83,7 @@ await test('line road exports a valid simple network', () => {
         road: {
             prefabName: 'Gravel Road',
             flags: ['Created', 'End', 'Moveable', 'OnGround', 'OneWayOut', 'OneWayIn'],
+            width: 8,
         },
     });
 
@@ -263,6 +264,7 @@ await test('smith st spiral composition compiles into a connected network', () =
         road: {
             prefabName: 'Gravel Road',
             flags: ['Created', 'End', 'Moveable', 'OnGround', 'OneWayOut', 'OneWayIn'],
+            width: 8,
         },
     });
 

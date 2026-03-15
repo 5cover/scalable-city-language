@@ -34,6 +34,8 @@ export interface RoadStyle {
     readonly prefabName: string;
     /** Move It / network flag tokens emitted for generated states. */
     readonly flags: readonly Flag[];
+    /** Approximate road width in meters, used by the fitter constraints. */
+    readonly width: number;
 }
 
 /**

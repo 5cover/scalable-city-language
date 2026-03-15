@@ -12,7 +12,7 @@ import type {
     FigureInput,
     FigureOf,
 } from '../domain/types.js';
-import { DEFAULT_MAX_SEGMENT_LENGTH } from '../utils/constants.js';
+import { DEFAULT_MAX_SEGMENT_LENGTH, DEFAULT_ROAD_WIDTH } from '../utils/constants.js';
 import { polarPoint } from '../utils/geometry.js';
 import type { DeepPartial } from '../utils/types.js';
 
@@ -30,6 +30,7 @@ const resolveOptions = (options: DeepPartial<CanvasOptions> | undefined, default
               road: {
                   prefabName: options.road?.prefabName ?? defaults.road.prefabName,
                   flags: options.road?.flags ?? defaults.road.flags,
+                  width: options.road?.width ?? defaults.road.width,
               },
           };
 
@@ -38,6 +39,7 @@ const apiDefaults: CanvasOptions = {
     road: {
         prefabName: 'Gravel Road',
         flags: ['Created'],
+        width: DEFAULT_ROAD_WIDTH,
     },
 };
 
