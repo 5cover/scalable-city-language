@@ -8,11 +8,12 @@ This repository contains the `scl` TypeScript library for authoring road shapes,
 
 - Treat `docs/Format.md` as the authoritative Move It export specification.
 - Use files in `docs/sample moveit exports/` to validate XML structure and serializer quirks.
-- Keep the implementation focused on the library only. Do not add a CLI, browser playground, or YAML DSL.
 - Users define shapes only. Nodes must always be derived from endpoints, intersections, and automatic subdivision.
 - Prefer strict, idiomatic TypeScript with immutable data and pure geometry functions.
 - Keep geometry logic centralized to avoid duplicated sampling, tangent, and subdivision behavior.
+- Write JSDoc comments.
 - Make commits regularly.
+- Write code in reverse topological order : constructs are followed by the constructs they depend on (such as the functions a function calls, the types referenced in an interface...). This is more intuitive and readable than topological order.
 
 ## Recommended Layout
 

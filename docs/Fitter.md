@@ -39,13 +39,13 @@ The fitter takes a set of authored figures and produces a network that:
 
 The fitter is responsible for:
 
-1. Converting shapes into internal spans
-2. Detecting intersections
-3. Splitting spans at required cut points
-4. Enforcing segment length and curvature limits
-5. Building nodes and segments
-6. Validating the resulting network against engine constraints
-7. Producing warnings or errors when constraints cannot be satisfied
+- Converting shapes into internal spans
+- Detecting intersections
+- Splitting spans at required cut points
+- Enforcing segment length and curvature limits
+- Building nodes and segments
+- Validating the resulting network against engine constraints
+- Producing warnings or errors when constraints cannot be satisfied
 
 It is not responsible for:
 
@@ -184,13 +184,11 @@ If the network cannot satisfy these constraints, the fitter produces warnings or
 Constraints are applied in this order:
 
 1. intersection cuts
-2. maximum segment length
-3. maximum turning angle
-4. node and segment construction
-5. minimum segment length
-6. maximum node degree
-7. minimum intersection angle
-8. minimum road clearance
+2. maximum segment length and turning angle
+3. minimum segment length
+4. maximum node degree
+5. minimum road clearance
+6. node and segment construction
 
 This order matters.
 
@@ -226,8 +224,6 @@ This prevents:
 - visibly distorted curves
 - poor circular and spiral approximation
 
-A practical default is 90°.
-
 If a span turns more than the limit, it is split.
 
 ### Minimum segment length
@@ -251,10 +247,6 @@ v3: Merge nearby nodes or cut points to eliminate short segments, accepting some
 
 A node may not connect to more than the configured maximum number of segments.
 
-A practical default is 8.
-
-This is a hard engine constraint.
-
 Nodes above the degree limit are rejected.
 
 v2: Split overloaded nodes into multiple nearby nodes connected by short linking segments.
@@ -269,7 +261,7 @@ This prevents:
 - visually collapsed intersections
 - extremely sharp and ugly joins
 
-We do not check this constraints for now. v2 may warn on very sharp angles but typically sharp angles are intended and can be dealt with Node Controller
+We do not check this constraints for now. v2 may warn on very sharp angles but typically sharp angles are intended and can be dealt with Node Controller.
 
 ### Minimum road clearance
 
@@ -306,7 +298,7 @@ Only coordinates are quantized:
 - y
 - z
 
-A branded type storing the quantization unit as an integer is used.
+A branded type storing the quantization unit as an integer is used with helper functions.
 
 Derived values are not quantized:
 
@@ -362,16 +354,13 @@ The fitter exposes configuration for geometry and validation.
 - `maxSegmentLength` = 96
 - `minSegmentLength` = road width * 0.5 + 4
 - `maxTurnAngleDeg` = 90
-- `maxNodeDegree` = 8
+- `maxNodeDegree` = 8 (hard engine constraint)
 - `minRoadClearance` = road width * 0.5
 - `quantizationStep` = 0.01m
 
 It also exposes policy toggles for how to handle unsatisfied constraints.
 
-Typical policy values:
-
-- error
-- warn
+Typical policy values error or warn.
 
 Policies are conservative by default.
 

@@ -202,8 +202,6 @@ export type Figure<K extends FigureKind = FigureKind> = Figures[K];
 
 /** Build-time input consumed by the network resolver. */
 export interface BuildSettings {
-    /** Canvas-level fallback maximum segment length in meters. */
-    readonly maxSegmentLength: number;
     /** Authored figures to resolve into nodes and segments. */
     readonly figures: readonly Figure[];
 }

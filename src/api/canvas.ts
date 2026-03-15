@@ -96,7 +96,6 @@ export const createCanvas = (options?: DeepPartial<CanvasOptions>): Canvas => {
         },
         build() {
             return buildNetwork({
-                maxSegmentLength: canvasDefaults.maxSegmentLength,
                 figures,
             });
         },
