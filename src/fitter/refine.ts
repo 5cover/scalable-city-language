@@ -1,10 +1,10 @@
 import type { Shape } from '../geometry/shapes.js';
 import { degreesToRadians } from '../utils/geometry.js';
 import { intersectSpans } from './intersections.js';
-import { initialSpansForShape, splitSpanAtParameters, spanLength, spanTurnAngle, subdivideSpan } from './spans.js';
+import { splitSpanAtParameters, spanLength, spanTurnAngle, subdivideSpan, mkspan } from './spans.js';
 import type { FitterOptions, Span } from './types.js';
 
-const splitAllIntersections = (spans: readonly Span[]): { changed: boolean; spans: Span[] } => {
+const splitAllIntersections = (spans: readonly Span[], options: FitterOptions): { changed: boolean; spans: Span[] } => {
     const cutParameters = new Map<string, number[]>();
 
     for (let leftIndex = 0; leftIndex < spans.length; leftIndex += 1) {
@@ -15,10 +15,16 @@ const splitAllIntersections = (spans: readonly Span[]): { changed: boolean; span
                 continue;
             }
 
-            const intersections = intersectSpans(left, right);
+            const intersections = intersectSpans(left, right, options);
             for (const intersection of intersections) {
-                cutParameters.set(intersection.leftSpanId, [...(cutParameters.get(intersection.leftSpanId) ?? []), intersection.leftT]);
-                cutParameters.set(intersection.rightSpanId, [...(cutParameters.get(intersection.rightSpanId) ?? []), intersection.rightT]);
+                cutParameters.set(intersection.leftSpanId, [
+                    ...(cutParameters.get(intersection.leftSpanId) ?? []),
+                    intersection.leftT,
+                ]);
+                cutParameters.set(intersection.rightSpanId, [
+                    ...(cutParameters.get(intersection.rightSpanId) ?? []),
+                    intersection.rightT,
+                ]);
             }
         }
     }
@@ -59,12 +65,12 @@ const splitAllConstraintViolations = (
 };
 
 export const fitShapesToSpans = (shapes: readonly Shape[], options: FitterOptions): Span[] => {
-    let spans = shapes.flatMap(shape => initialSpansForShape(shape));
+    let spans = shapes.flatMap(shape => mkspan(shape));
 
     for (let iteration = 0; iteration < 32; iteration += 1) {
         let changed = false;
 
-        const intersectionPass = splitAllIntersections(spans);
+        const intersectionPass = splitAllIntersections(spans, options);
         spans = intersectionPass.spans;
         changed ||= intersectionPass.changed;
 

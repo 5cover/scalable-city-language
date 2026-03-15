@@ -17,8 +17,8 @@
     "lint": "eslint src test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "tsx --test",
-    "prepare": "eslint && tsx --test && tsc -p tsconfig.build.json"
+    "test": "tsc -p tsconfig.test.json --incremental && node --test distest/test/*.test.js",
+    "prepare": "eslint && node --test && tsc -p tsconfig.build.json --incremental"
   },
   "keywords": [],
   "author": "5cover",
@@ -39,7 +39,6 @@
     "fast-xml-parser": "^5.5.5",
     "jiti": "^2.6.1",
     "prettier": "^3.5.3",
-    "tsx": "^4.21.0",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.57.0"
   },

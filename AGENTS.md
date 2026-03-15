@@ -16,6 +16,7 @@ This repository contains the `scl` TypeScript library for authoring road shapes,
 - Write code in reverse topological order : constructs are followed by the constructs they depend on (such as the functions a function calls, the types referenced in an interface...). This is more intuitive and readable than topological order.
 - Avoid arbitrary limitations and empirical choices unless strictly necessary, and even then inform the user in your recap.
 - Include comments to explain non-trivial pieces of code. Why is this done a certain why.
+- Do not use outdated TypeScript constructs such as `Array<T>`, instead use modern versions: `T[]`
 
 ## Recommended Layout
 

@@ -26,7 +26,9 @@ const segmentLength = (start: Point3, end: Point3): number => {
 };
 
 const controlDistanceFromLine = (start: Point3, control: Point3, end: Point3): number => {
-    const numerator = Math.abs((end.z - start.z) * control.x - (end.x - start.x) * control.z + end.x * start.z - end.z * start.x);
+    const numerator = Math.abs(
+        (end.z - start.z) * control.x - (end.x - start.x) * control.z + end.x * start.z - end.z * start.x
+    );
     return numerator / Math.hypot(end.z - start.z, end.x - start.x);
 };
 
@@ -102,7 +104,10 @@ await test('line road exports a valid simple network', () => {
     assert.equal(countOccurrences(xml, 'xmlns:xsi='), 1);
     assert.match(xml, /<startNode>0<\/startNode>/);
     assert.match(xml, /<endNode>1<\/endNode>/);
-    assert.ok(controlDistanceFromLine(network.segments[0]!.start, network.segments[0]!.control, network.segments[0]!.end) <= EPSILON);
+    assert.ok(
+        controlDistanceFromLine(network.segments[0]!.start, network.segments[0]!.control, network.segments[0]!.end) <=
+            EPSILON
+    );
 });
 
 await test('circle road gets segmented and closes correctly', () => {

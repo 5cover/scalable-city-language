@@ -1,8 +1,8 @@
 import { includeIgnoreFile } from '@eslint/compat';
 import typescriptEslint from 'typescript-eslint';
 import * as path from 'path';
-
-export default [
+import { defineConfig } from 'eslint/config';
+export default defineConfig([
     includeIgnoreFile(path.resolve(import.meta.dirname, '.gitignore')),
     ...typescriptEslint.configs.strictTypeChecked,
     ...typescriptEslint.configs.stylisticTypeChecked,
@@ -32,4 +32,4 @@ export default [
             ],
         },
     },
-];
+]);

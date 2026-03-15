@@ -1,7 +1,11 @@
 import type { BuildResult, Figure } from '../domain/types.js';
 import { createShape } from '../geometry/shapes.js';
 import {
+    DEFAULT_INTERSECTION_FLATNESS_DISTANCE_TOLERANCE,
+    DEFAULT_INTERSECTION_FLATNESS_TURN_ANGLE_DEG,
+    DEFAULT_INTERSECTION_POINT_TOLERANCE,
     DEFAULT_MAX_NODE_DEGREE,
+    DEFAULT_MAX_INTERSECTION_SUBDIVISION_DEPTH,
     DEFAULT_MAX_TURN_ANGLE_DEG,
     DEFAULT_MIN_INTERSECTION_ANGLE_DEG,
     DEFAULT_QUANTIZATION_STEP,
@@ -16,9 +20,16 @@ const defaultFitterOptions: FitterOptions = {
     maxNodeDegree: DEFAULT_MAX_NODE_DEGREE,
     minIntersectionAngleDeg: DEFAULT_MIN_INTERSECTION_ANGLE_DEG,
     quantizationStep: DEFAULT_QUANTIZATION_STEP,
+    maxIntersectionSubdivisionDepth: DEFAULT_MAX_INTERSECTION_SUBDIVISION_DEPTH,
+    intersectionFlatnessDistanceTolerance: DEFAULT_INTERSECTION_FLATNESS_DISTANCE_TOLERANCE,
+    intersectionFlatnessTurnAngleDeg: DEFAULT_INTERSECTION_FLATNESS_TURN_ANGLE_DEG,
+    intersectionPointTolerance: DEFAULT_INTERSECTION_POINT_TOLERANCE,
 };
 
-export const fitFiguresToNetwork = (figures: readonly Figure[], options: FitterOptions = defaultFitterOptions): BuildResult => {
+export const fitFiguresToNetwork = (
+    figures: readonly Figure[],
+    options: FitterOptions = defaultFitterOptions
+): BuildResult => {
     const shapes = figures.map(createShape);
     const spans = fitShapesToSpans(shapes, options);
     const graph = buildGraphFromSpans(spans, options);

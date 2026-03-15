@@ -39,6 +39,10 @@ export interface FitterOptions {
     readonly maxNodeDegree: number;
     readonly minIntersectionAngleDeg: number;
     readonly quantizationStep: number;
+    readonly maxIntersectionSubdivisionDepth: number;
+    readonly intersectionFlatnessDistanceTolerance: number;
+    readonly intersectionFlatnessTurnAngleDeg: number;
+    readonly intersectionPointTolerance: number;
 }
 
 export interface FitterIssue {

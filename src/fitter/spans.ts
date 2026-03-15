@@ -38,12 +38,8 @@ const normalizeParameterForSpan = (span: Span, parameter: number): number => {
     return parameter + 1;
 };
 
-export const initialSpansForShape = (shape: Shape): Span[] => {
-    if (!shape.isClosed || shape.figure.kind === 'circle') {
-        return [{ id: nextSpanId(), shape, t0: 0, t1: 1 }];
-    }
-
-    return [{ id: nextSpanId(), shape, t0: 0, t1: 1 }];
+export const mkspan = (shape: Shape, t0 = 0, t1 = 1): Span => {
+    return { id: nextSpanId(), shape, t0, t1 };
 };
 
 export const spanStart = (span: Span) => span.shape.pointAt(span.t0);
@@ -93,7 +89,7 @@ export const splitSpanAtParameters = (span: Span, parameters: readonly number[])
             continue;
         }
 
-        spans.push({ id: nextSpanId(), shape: span.shape, t0, t1 });
+        spans.push(mkspan(span.shape, t0, t1));
     }
 
     return spans;

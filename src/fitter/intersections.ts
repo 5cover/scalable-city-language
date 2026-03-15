@@ -1,105 +1,104 @@
-import type { Figure } from '../domain/types.js';
-import type { Shape } from '../geometry/shapes.js';
 import { invariant } from '../utils/assert.js';
-import {
-    INTERSECTION_SAMPLE_SPACING,
-    MAX_INTERSECTION_SAMPLE_COUNT,
-    MAX_ROOT_ITERATIONS,
-    MIN_INTERSECTION_SAMPLE_COUNT,
-    PARAMETER_EPSILON,
-    POSITION_EPSILON,
-} from '../utils/constants.js';
-import { clamp, cross2, distance2, dot2, nearlyEqual, point2, subtract2 } from '../utils/math.js';
-import { parameterInsideSpan } from './spans.js';
-import type { Span, SpanIntersection } from './types.js';
+import { MAX_ROOT_ITERATIONS, PARAMETER_EPSILON, POSITION_EPSILON } from '../utils/constants.js';
+import { clamp, cross2, distance2, point2, subtract2 } from '../utils/math.js';
+import { degreesToRadians } from '../utils/geometry.js';
+import { parameterInsideSpan, spanTurnAngle } from './spans.js';
+import type { FitterOptions, Span, SpanIntersection } from './types.js';
 
-interface ShapeIntersection {
-    readonly leftT: number;
-    readonly rightT: number;
+interface Bounds {
+    readonly minX: number;
+    readonly minZ: number;
+    readonly maxX: number;
+    readonly maxZ: number;
 }
 
-const createIntersection = (leftT: number, rightT: number): ShapeIntersection => ({ leftT, rightT });
+interface FlatIntersectionCandidate {
+    readonly leftU: number;
+    readonly rightV: number;
+}
 
-const sampleCountForShape = (shape: Shape): number => {
-    return clamp(
-        Math.ceil(shape.totalLength / INTERSECTION_SAMPLE_SPACING),
-        MIN_INTERSECTION_SAMPLE_COUNT,
-        MAX_INTERSECTION_SAMPLE_COUNT
+const spanParameterAt = (span: Span, u: number): number => span.t0 + (span.t1 - span.t0) * u;
+
+const spanPointAt = (span: Span, u: number) => span.shape.pointAt(spanParameterAt(span, u));
+
+const spanDerivativeAt = (span: Span, u: number) => {
+    const tangent = span.shape.tangentAt(spanParameterAt(span, u));
+    const scale = span.t1 - span.t0;
+    return point2(tangent.x * scale, tangent.z * scale);
+};
+
+const spanBounds = (span: Span): Bounds => {
+    const samples = [0, 0.25, 0.5, 0.75, 1].map(u => spanPointAt(span, u));
+    return samples.reduce<Bounds>(
+        (bounds, point) => ({
+            minX: Math.min(bounds.minX, point.x),
+            minZ: Math.min(bounds.minZ, point.z),
+            maxX: Math.max(bounds.maxX, point.x),
+            maxZ: Math.max(bounds.maxZ, point.z),
+        }),
+        {
+            minX: Number.POSITIVE_INFINITY,
+            minZ: Number.POSITIVE_INFINITY,
+            maxX: Number.NEGATIVE_INFINITY,
+            maxZ: Number.NEGATIVE_INFINITY,
+        }
     );
 };
 
-const bisectRoot = (fn: (value: number) => number, start: number, end: number): number => {
-    let low = start;
-    let high = end;
-    let lowValue = fn(low);
-
-    for (let iteration = 0; iteration < MAX_ROOT_ITERATIONS; iteration += 1) {
-        const mid = (low + high) / 2;
-        const midValue = fn(mid);
-
-        if (Math.abs(midValue) <= POSITION_EPSILON) {
-            return mid;
-        }
-
-        if (Math.sign(lowValue) === Math.sign(midValue)) {
-            low = mid;
-            lowValue = midValue;
-        } else {
-            high = mid;
-        }
-    }
-
-    return (low + high) / 2;
+const boundsOverlap = (left: Bounds, right: Bounds): boolean => {
+    return !(
+        left.maxX < right.minX - POSITION_EPSILON ||
+        right.maxX < left.minX - POSITION_EPSILON ||
+        left.maxZ < right.minZ - POSITION_EPSILON ||
+        right.maxZ < left.minZ - POSITION_EPSILON
+    );
 };
 
-const scanRoots = (fn: (value: number) => number, sampleCount: number): number[] => {
-    const roots: number[] = [];
-    let previousT = 0;
-    let previousValue = fn(0);
-
-    for (let index = 1; index <= sampleCount; index += 1) {
-        const currentT = index / sampleCount;
-        const currentValue = fn(currentT);
-
-        if (Math.abs(currentValue) <= POSITION_EPSILON) {
-            roots.push(currentT);
-        } else if (Math.abs(previousValue) <= POSITION_EPSILON) {
-            roots.push(previousT);
-        } else if (Math.sign(previousValue) !== Math.sign(currentValue)) {
-            roots.push(bisectRoot(fn, previousT, currentT));
-        }
-
-        previousT = currentT;
-        previousValue = currentValue;
-    }
-
-    return roots;
+const distancePointToChord = (
+    point: { x: number; z: number },
+    start: { x: number; z: number },
+    end: { x: number; z: number }
+): number => {
+    const numerator = Math.abs(
+        (end.z - start.z) * point.x - (end.x - start.x) * point.z + end.x * start.z - end.z * start.x
+    );
+    const denominator = Math.hypot(end.z - start.z, end.x - start.x);
+    return denominator <= POSITION_EPSILON
+        ? distance2(point2(point.x, point.z), point2(start.x, start.z))
+        : numerator / denominator;
 };
 
-const intersectLineLine = (left: Shape, right: Shape): ShapeIntersection[] => {
-    const a = (left.figure as Extract<Figure, { kind: 'line' }>).params;
-    const b = (right.figure as Extract<Figure, { kind: 'line' }>).params;
-    const p = point2(a.start.x, a.start.z);
-    const q = point2(b.start.x, b.start.z);
-    const r = point2(a.end.x - a.start.x, a.end.z - a.start.z);
-    const s = point2(b.end.x - b.start.x, b.end.z - b.start.z);
+const isFlatEnough = (span: Span, options: FitterOptions): boolean => {
+    const start = spanPointAt(span, 0);
+    const mid = spanPointAt(span, 0.5);
+    const end = spanPointAt(span, 1);
+    return (
+        distancePointToChord(mid, start, end) <= options.intersectionFlatnessDistanceTolerance &&
+        spanTurnAngle(span) <= degreesToRadians(options.intersectionFlatnessTurnAngleDeg)
+    );
+};
+
+const splitSpanMid = (span: Span): [Span, Span] => {
+    const tm = spanParameterAt(span, 0.5);
+    return [
+        { id: `${span.id}:0`, shape: span.shape, t0: span.t0, t1: tm },
+        { id: `${span.id}:1`, shape: span.shape, t0: tm, t1: span.t1 },
+    ];
+};
+
+const intersectChordSegments = (left: Span, right: Span): FlatIntersectionCandidate[] => {
+    const p = point2(spanPointAt(left, 0).x, spanPointAt(left, 0).z);
+    const p2 = point2(spanPointAt(left, 1).x, spanPointAt(left, 1).z);
+    const q = point2(spanPointAt(right, 0).x, spanPointAt(right, 0).z);
+    const q2 = point2(spanPointAt(right, 1).x, spanPointAt(right, 1).z);
+    const r = subtract2(p2, p);
+    const s = subtract2(q2, q);
     const rxs = cross2(r, s);
     const qMinusP = subtract2(q, p);
     const qpxr = cross2(qMinusP, r);
 
     if (Math.abs(rxs) <= POSITION_EPSILON && Math.abs(qpxr) <= POSITION_EPSILON) {
-        const rDotR = dot2(r, r);
-        const t0 = dot2(qMinusP, r) / rDotR;
-        const t1 = t0 + dot2(s, r) / rDotR;
-        const overlapStart = Math.max(0, Math.min(t0, t1));
-        const overlapEnd = Math.min(1, Math.max(t0, t1));
-
-        invariant(
-            overlapEnd - overlapStart <= POSITION_EPSILON,
-            `Overlapping collinear line roads are not supported (${left.figure.id}, ${right.figure.id}).`
-        );
-
-        return [];
+        invariant(false, `Overlapping spans are not supported (${left.shape.figure.id}, ${right.shape.figure.id}).`);
     }
 
     if (Math.abs(rxs) <= POSITION_EPSILON) {
@@ -113,159 +112,27 @@ const intersectLineLine = (left: Shape, right: Shape): ShapeIntersection[] => {
         return [];
     }
 
-    return [createIntersection(clamp(t, 0, 1), clamp(u, 0, 1))];
+    return [{ leftU: clamp(t, 0, 1), rightV: clamp(u, 0, 1) }];
 };
 
-const intersectLineCircle = (left: Shape, right: Shape): ShapeIntersection[] => {
-    const line = (left.figure.kind === 'line' ? left.figure : (right.figure as Extract<Figure, { kind: 'line' }>)).params;
-    const circle = (left.figure.kind === 'circle'
-        ? left.figure
-        : (right.figure as Extract<Figure, { kind: 'circle' }>)).params;
-    const lineIsLeft = left.figure.kind === 'line';
-    const start = point2(line.start.x, line.start.z);
-    const end = point2(line.end.x, line.end.z);
-    const center = point2(circle.center.x, circle.center.z);
-    const direction = subtract2(end, start);
-    const offset = subtract2(start, center);
-    const a = dot2(direction, direction);
-    const b = 2 * dot2(offset, direction);
-    const c = dot2(offset, offset) - circle.radius * circle.radius;
-    const discriminant = b * b - 4 * a * c;
+const refineIntersection = (
+    left: Span,
+    right: Span,
+    initialLeftU: number,
+    initialRightV: number,
+    options: FitterOptions
+): SpanIntersection | undefined => {
+    let u = clamp(initialLeftU, 0, 1);
+    let v = clamp(initialRightV, 0, 1);
 
-    if (discriminant < -POSITION_EPSILON) {
-        return [];
-    }
+    for (let iteration = 0; iteration < MAX_ROOT_ITERATIONS; iteration += 1) {
+        const leftPoint = spanPointAt(left, u);
+        const rightPoint = spanPointAt(right, v);
+        const delta = point2(rightPoint.x - leftPoint.x, rightPoint.z - leftPoint.z);
 
-    const roots: number[] = [];
-    if (Math.abs(discriminant) <= POSITION_EPSILON) {
-        roots.push(-b / (2 * a));
-    } else {
-        const root = Math.sqrt(Math.max(discriminant, 0));
-        roots.push((-b - root) / (2 * a), (-b + root) / (2 * a));
-    }
-
-    return roots
-        .filter(value => value >= -PARAMETER_EPSILON && value <= 1 + PARAMETER_EPSILON)
-        .map(lineT => {
-            const clamped = clamp(lineT, 0, 1);
-            const point = lineIsLeft ? left.pointAt(clamped) : right.pointAt(clamped);
-            const angle = Math.atan2(point.z - circle.center.z, point.x - circle.center.x);
-            const circleT = ((angle / (Math.PI * 2)) % 1 + 1) % 1;
-            return lineIsLeft ? createIntersection(clamped, circleT) : createIntersection(circleT, clamped);
-        });
-};
-
-const intersectCircleCircle = (left: Shape, right: Shape): ShapeIntersection[] => {
-    const a = (left.figure as Extract<Figure, { kind: 'circle' }>).params;
-    const b = (right.figure as Extract<Figure, { kind: 'circle' }>).params;
-    const centerA = point2(a.center.x, a.center.z);
-    const centerB = point2(b.center.x, b.center.z);
-    const distance = distance2(centerA, centerB);
-
-    invariant(
-        !(distance <= POSITION_EPSILON && nearlyEqual(a.radius, b.radius)),
-        `Overlapping circles are not supported (${left.figure.id}, ${right.figure.id}).`
-    );
-
-    if (distance > a.radius + b.radius + POSITION_EPSILON) {
-        return [];
-    }
-    if (distance < Math.abs(a.radius - b.radius) - POSITION_EPSILON || distance <= POSITION_EPSILON) {
-        return [];
-    }
-
-    const baseDistance = (a.radius * a.radius - b.radius * b.radius + distance * distance) / (2 * distance);
-    const heightSquared = a.radius * a.radius - baseDistance * baseDistance;
-    const height = Math.sqrt(Math.max(heightSquared, 0));
-    const axis = point2((centerB.x - centerA.x) / distance, (centerB.z - centerA.z) / distance);
-    const perpendicular = point2(-axis.z, axis.x);
-    const basePoint = point2(centerA.x + axis.x * baseDistance, centerA.z + axis.z * baseDistance);
-    const points =
-        height <= POSITION_EPSILON
-            ? [basePoint]
-            : [
-                  point2(basePoint.x + perpendicular.x * height, basePoint.z + perpendicular.z * height),
-                  point2(basePoint.x - perpendicular.x * height, basePoint.z - perpendicular.z * height),
-              ];
-
-    return points.map(point => {
-        const leftAngle = Math.atan2(point.z - a.center.z, point.x - a.center.x);
-        const rightAngle = Math.atan2(point.z - b.center.z, point.x - b.center.x);
-        return createIntersection(
-            ((leftAngle / (Math.PI * 2)) % 1 + 1) % 1,
-            ((rightAngle / (Math.PI * 2)) % 1 + 1) % 1
-        );
-    });
-};
-
-const intersectLineSpiral = (left: Shape, right: Shape): ShapeIntersection[] => {
-    const line = (left.figure.kind === 'line' ? left.figure : (right.figure as Extract<Figure, { kind: 'line' }>)).params;
-    const spiral = left.figure.kind === 'spiral' ? left : right;
-    const lineIsLeft = left.figure.kind === 'line';
-    const start = point2(line.start.x, line.start.z);
-    const direction = point2(line.end.x - line.start.x, line.end.z - line.start.z);
-    const directionLengthSquared = dot2(direction, direction);
-    const roots = scanRoots(t => {
-        const point = spiral.pointAt(t);
-        return cross2(subtract2(point2(point.x, point.z), start), direction);
-    }, sampleCountForShape(spiral));
-
-    return roots
-        .map(spiralT => {
-            const point = spiral.pointAt(spiralT);
-            const lineT = dot2(subtract2(point2(point.x, point.z), start), direction) / directionLengthSquared;
-            return { lineT, spiralT };
-        })
-        .filter(({ lineT }) => lineT >= -PARAMETER_EPSILON && lineT <= 1 + PARAMETER_EPSILON)
-        .map(({ lineT, spiralT }) =>
-            lineIsLeft ? createIntersection(clamp(lineT, 0, 1), spiralT) : createIntersection(spiralT, clamp(lineT, 0, 1))
-        );
-};
-
-const intersectCircleSpiral = (left: Shape, right: Shape): ShapeIntersection[] => {
-    const circle = (left.figure.kind === 'circle'
-        ? left.figure
-        : (right.figure as Extract<Figure, { kind: 'circle' }>)).params;
-    const spiral = left.figure.kind === 'spiral' ? left : right;
-    const circleIsLeft = left.figure.kind === 'circle';
-    const center = point2(circle.center.x, circle.center.z);
-    const roots = scanRoots(t => {
-        const point = spiral.pointAt(t);
-        return distance2(point2(point.x, point.z), center) - circle.radius;
-    }, sampleCountForShape(spiral));
-
-    return roots.map(spiralT => {
-        const point = spiral.pointAt(spiralT);
-        const circleT = ((Math.atan2(point.z - circle.center.z, point.x - circle.center.x) / (Math.PI * 2)) % 1 + 1) % 1;
-        return circleIsLeft ? createIntersection(circleT, spiralT) : createIntersection(spiralT, circleT);
-    });
-};
-
-const intersectShapes = (left: Shape, right: Shape): ShapeIntersection[] => {
-    if (left.figure.kind === 'line' && right.figure.kind === 'line') {
-        return intersectLineLine(left, right);
-    }
-    if ((left.figure.kind === 'line' && right.figure.kind === 'circle') || (left.figure.kind === 'circle' && right.figure.kind === 'line')) {
-        return intersectLineCircle(left, right);
-    }
-    if (left.figure.kind === 'circle' && right.figure.kind === 'circle') {
-        return intersectCircleCircle(left, right);
-    }
-    if ((left.figure.kind === 'line' && right.figure.kind === 'spiral') || (left.figure.kind === 'spiral' && right.figure.kind === 'line')) {
-        return intersectLineSpiral(left, right);
-    }
-    if ((left.figure.kind === 'circle' && right.figure.kind === 'spiral') || (left.figure.kind === 'spiral' && right.figure.kind === 'circle')) {
-        return intersectCircleSpiral(left, right);
-    }
-
-    return [];
-};
-
-export const intersectSpans = (left: Span, right: Span): SpanIntersection[] => {
-    return intersectShapes(left.shape, right.shape)
-        .map(intersection => {
-            const leftT = parameterInsideSpan(left, intersection.leftT);
-            const rightT = parameterInsideSpan(right, intersection.rightT);
+        if (Math.hypot(delta.x, delta.z) <= options.intersectionPointTolerance) {
+            const leftT = parameterInsideSpan(left, spanParameterAt(left, u));
+            const rightT = parameterInsideSpan(right, spanParameterAt(right, v));
 
             if (leftT === undefined || rightT === undefined) {
                 return undefined;
@@ -277,6 +144,110 @@ export const intersectSpans = (left: Span, right: Span): SpanIntersection[] => {
                 leftT,
                 rightT,
             };
-        })
-        .filter((value): value is SpanIntersection => value !== undefined);
+        }
+
+        const leftDerivative = spanDerivativeAt(left, u);
+        const rightDerivative = spanDerivativeAt(right, v);
+        const determinant = cross2(leftDerivative, rightDerivative);
+
+        if (Math.abs(determinant) <= POSITION_EPSILON) {
+            break;
+        }
+
+        const du = cross2(delta, rightDerivative) / determinant;
+        const dv = cross2(leftDerivative, delta) / determinant;
+
+        u = clamp(u + du, 0, 1);
+        v = clamp(v + dv, 0, 1);
+    }
+
+    const leftPoint = spanPointAt(left, u);
+    const rightPoint = spanPointAt(right, v);
+    if (
+        distance2(point2(leftPoint.x, leftPoint.z), point2(rightPoint.x, rightPoint.z)) >
+        options.intersectionPointTolerance
+    ) {
+        return undefined;
+    }
+
+    const leftT = parameterInsideSpan(left, spanParameterAt(left, u));
+    const rightT = parameterInsideSpan(right, spanParameterAt(right, v));
+
+    if (leftT === undefined || rightT === undefined) {
+        return undefined;
+    }
+
+    return {
+        leftSpanId: left.id,
+        rightSpanId: right.id,
+        leftT,
+        rightT,
+    };
+};
+
+const dedupeIntersections = (intersections: readonly SpanIntersection[]): SpanIntersection[] => {
+    const deduped: SpanIntersection[] = [];
+
+    for (const intersection of intersections) {
+        const exists = deduped.some(existing => {
+            return (
+                Math.abs(existing.leftT - intersection.leftT) <= PARAMETER_EPSILON &&
+                Math.abs(existing.rightT - intersection.rightT) <= PARAMETER_EPSILON
+            );
+        });
+
+        if (!exists) {
+            deduped.push(intersection);
+        }
+    }
+
+    return deduped;
+};
+
+export const intersectSpans = (left: Span, right: Span, options: FitterOptions): SpanIntersection[] => {
+    const pending: { left: Span; right: Span; depth: number }[] = [{ left, right, depth: 0 }];
+    const intersections: SpanIntersection[] = [];
+
+    while (pending.length > 0) {
+        const current = pending.pop();
+        if (current === undefined) {
+            continue;
+        }
+
+        if (!boundsOverlap(spanBounds(current.left), spanBounds(current.right))) {
+            continue;
+        }
+
+        const leftFlat = isFlatEnough(current.left, options);
+        const rightFlat = isFlatEnough(current.right, options);
+
+        if ((leftFlat && rightFlat) || current.depth >= options.maxIntersectionSubdivisionDepth) {
+            for (const candidate of intersectChordSegments(current.left, current.right)) {
+                const refined = refineIntersection(
+                    current.left,
+                    current.right,
+                    candidate.leftU,
+                    candidate.rightV,
+                    options
+                );
+                if (refined !== undefined) {
+                    intersections.push(refined);
+                }
+            }
+            continue;
+        }
+
+        if (!leftFlat && (rightFlat || spanTurnAngle(current.left) >= spanTurnAngle(current.right))) {
+            const [leftA, leftB] = splitSpanMid(current.left);
+            pending.push({ left: leftA, right: current.right, depth: current.depth + 1 });
+            pending.push({ left: leftB, right: current.right, depth: current.depth + 1 });
+            continue;
+        }
+
+        const [rightA, rightB] = splitSpanMid(current.right);
+        pending.push({ left: current.left, right: rightA, depth: current.depth + 1 });
+        pending.push({ left: current.left, right: rightB, depth: current.depth + 1 });
+    }
+
+    return dedupeIntersections(intersections);
 };
